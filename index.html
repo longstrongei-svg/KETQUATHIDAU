@@ -6,91 +6,154 @@
   <title>📋 Kết quả thi đấu – Thư ký</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',Arial,sans-serif;background:#0d1b2a;color:#e0e6f0;min-height:100vh}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;min-height:100vh}
 
     /* ── HEADER ── */
-    header{background:linear-gradient(135deg,#1a2a4a,#0d1b2a);border-bottom:2px solid #2a4a7f;
-      padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-    header h1{font-size:20px;color:#f0c040;font-weight:700}
-    .live-dot{display:flex;align-items:center;gap:6px;font-size:13px;color:#4cdf80}
-    .live-dot .dot{width:9px;height:9px;border-radius:50%;background:#4cdf80;animation:pulse 1.5s infinite}
+    header{background:linear-gradient(135deg,#1d4ed8,#2563eb,#0ea5e9);
+      padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+      box-shadow:0 2px 12px rgba(37,99,235,.3)}
+    header h1{font-size:20px;color:#fff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.2)}
+    .live-dot{display:flex;align-items:center;gap:6px;font-size:13px;color:#a7f3d0}
+    .live-dot .dot{width:9px;height:9px;border-radius:50%;background:#34d399;animation:pulse 1.5s infinite}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-    .last-update{font-size:12px;color:#5a7a9a;margin-top:2px}
+    .last-update{font-size:12px;color:#bfdbfe;margin-top:2px}
 
     /* ── MAIN TABS ── */
-    .main-tabs{display:flex;background:#0a1520;border-bottom:2px solid #1e3050;padding:0 20px;overflow-x:auto}
-    .main-tab{padding:12px 20px;cursor:pointer;font-size:14px;font-weight:600;color:#5a7a9a;white-space:nowrap;
+    .main-tabs{display:flex;background:#fff;border-bottom:2px solid #e2e8f0;padding:0 20px;overflow-x:auto;
+      box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .main-tab{padding:12px 20px;cursor:pointer;font-size:14px;font-weight:600;color:#64748b;white-space:nowrap;
       border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s}
-    .main-tab.active{color:#f0c040;border-bottom-color:#f0c040}
-    .main-tab:hover:not(.active){color:#a0bce0}
+    .main-tab.active{color:#2563eb;border-bottom-color:#2563eb}
+    .main-tab:hover:not(.active){color:#3b82f6;background:#f8fafc}
 
     /* ── CONTROLS ── */
-    .controls{background:#132035;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #1e3050}
+    .controls{background:#fff;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      border-bottom:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
     .san-tabs{display:flex;gap:5px;flex-wrap:wrap}
-    .san-btn{padding:5px 14px;border:1px solid #2a4a7f;border-radius:20px;background:transparent;color:#7a9cc0;cursor:pointer;font-size:13px;transition:all .2s}
-    .san-btn.active{background:#1a4a8a;border-color:#3a7adf;color:#fff;font-weight:600}
-    .san-btn:hover:not(.active){border-color:#3a5a9f;color:#a0bce0}
-    .search-box{flex:1;max-width:260px;padding:6px 14px;background:#0d1b2a;border:1px solid #2a4a7f;border-radius:20px;color:#e0e6f0;font-size:13px;outline:none}
-    .search-box::placeholder{color:#4a6a8a}
-    .search-box:focus{border-color:#3a7adf}
+    .san-btn{padding:5px 14px;border:1px solid #cbd5e1;border-radius:20px;background:#fff;color:#64748b;cursor:pointer;font-size:13px;transition:all .2s}
+    .san-btn.active{background:#2563eb;border-color:#2563eb;color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(37,99,235,.3)}
+    .san-btn:hover:not(.active){border-color:#93c5fd;color:#2563eb;background:#eff6ff}
+    .search-box{flex:1;max-width:260px;padding:6px 14px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:20px;color:#1e293b;font-size:13px;outline:none}
+    .search-box::placeholder{color:#94a3b8}
+    .search-box:focus{border-color:#3b82f6;background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
     .stats-row{display:flex;gap:8px;margin-left:auto}
     .chip{padding:4px 11px;border-radius:12px;font-size:12px;font-weight:600}
-    .chip-g{background:#1a4a2a;color:#4cdf80;border:1px solid #2a6a3a}
-    .chip-b{background:#1a2a4a;color:#7abcff;border:1px solid #2a4a7f}
+    .chip-g{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0}
+    .chip-b{background:#dbeafe;color:#2563eb;border:1px solid #bfdbfe}
 
     /* ── TABLE ── */
     .tab-content{display:none}
     .tab-content.active{display:block}
     .tbl-wrap{padding:16px 24px;overflow-x:auto}
-    table{width:100%;border-collapse:collapse;font-size:14px;min-width:680px}
-    thead th{background:#132035;color:#7abcff;padding:9px 13px;text-align:left;font-weight:600;
-      font-size:12px;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid #1e3050}
-    tbody tr{border-bottom:1px solid #1a2a3a;transition:background .12s}
-    tbody tr:hover{background:#132035}
+    table{width:100%;border-collapse:collapse;font-size:14px;min-width:900px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+    thead th{background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;padding:10px 13px;text-align:left;font-weight:600;
+      font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+    tbody tr{border-bottom:1px solid #f1f5f9;transition:background .12s}
+    tbody tr:nth-child(even){background:#fafbfc}
+    tbody tr:hover{background:#eff6ff}
     tbody td{padding:9px 13px;vertical-align:middle}
 
     /* badges */
     .badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:13px;font-weight:700;min-width:30px;text-align:center}
-    .badge-stt{background:#1a2a4a;color:#7abcff}
+    .badge-stt{background:#dbeafe;color:#2563eb}
     .badge-san{display:inline-block;font-size:11px;padding:2px 7px;border-radius:8px;font-weight:600}
-    .san-1{background:#2a1a4a;color:#c070ff}.san-2{background:#1a2a4a;color:#70c0ff}
-    .san-3{background:#1a3a2a;color:#70ff90}.san-4{background:#3a2a1a;color:#ffb070}.san-5{background:#3a1a1a;color:#ff7070}
-    .team-r{color:#ff6060;font-weight:600}.team-b{color:#6090ff;font-weight:600}
-    .vs{display:inline-block;background:#1e3050;color:#5a7a9a;border-radius:4px;padding:1px 5px;font-size:11px;margin:0 3px}
-    .win-name{font-weight:700;color:#f0c040}
-    .win-unit{font-size:12px;color:#7a9cc0}
-    .tag-reason{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#1a3a5a;color:#7abcff;white-space:nowrap}
-    .tag-pending{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#7a6a3a;background:#2a2010;padding:3px 9px;border-radius:10px;border:1px solid #4a4020}
+    .san-1{background:#f3e8ff;color:#7c3aed}.san-2{background:#dbeafe;color:#1d4ed8}
+    .san-3{background:#dcfce7;color:#15803d}.san-4{background:#ffedd5;color:#c2410c}.san-5{background:#fee2e2;color:#dc2626}
+    .team-r{color:#dc2626;font-weight:600}.team-b{color:#2563eb;font-weight:600}
+    .vs{display:inline-block;background:#e2e8f0;color:#64748b;border-radius:4px;padding:1px 5px;font-size:11px;margin:0 3px}
+    .win-name{font-weight:700;color:#d97706}
+    .win-unit{font-size:12px;color:#64748b}
+    .tag-reason{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#dbeafe;color:#1d4ed8;white-space:nowrap}
+    .tag-pending{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#92400e;background:#fef3c7;padding:3px 9px;border-radius:10px;border:1px solid #fde68a}
 
     /* medal badges */
     .medal{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px}
-    .medal-gold  {background:#3a2a00;color:#ffd700;border:1px solid #8a6a00}
-    .medal-silver{background:#1a2a3a;color:#c0d0e0;border:1px solid #5a7a9a}
-    .medal-bronze{background:#2a1a0a;color:#cd8c50;border:1px solid #6a4a1a}
-    .rank-tag{display:inline-block;background:#1a2a4a;color:#7abcff;border-radius:6px;padding:2px 8px;font-size:13px;font-weight:700}
+    .medal-gold  {background:#fef9c3;color:#b45309;border:1px solid #fde68a}
+    .medal-silver{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+    .medal-bronze{background:#fef3e2;color:#92400e;border:1px solid #fed7aa}
+    .rank-tag{display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-size:13px;font-weight:700}
 
     /* GROUP HEADER ROW in medal table */
-    .group-header td{background:#0f2030;color:#f0c040;font-weight:700;font-size:13px;letter-spacing:.3px;padding:10px 13px;border-top:2px solid #2a4a7f}
+    .group-header td{background:linear-gradient(90deg,#eff6ff,#f8fafc);color:#1d4ed8;font-weight:700;font-size:13px;letter-spacing:.3px;padding:10px 13px;border-top:2px solid #bfdbfe;border-left:4px solid #2563eb}
 
     /* summary table */
-    .rank-1{color:#ffd700;font-weight:800;font-size:16px}
-    .rank-2{color:#c0d0e0;font-weight:700}
-    .rank-3{color:#cd8c50;font-weight:700}
-    .num-gold{color:#ffd700;font-weight:700;font-size:15px}
-    .num-silver{color:#c0d0e0;font-weight:700;font-size:15px}
-    .num-bronze{color:#cd8c50;font-weight:700;font-size:15px}
+    .rank-1{color:#b45309;font-weight:800;font-size:16px}
+    .rank-2{color:#475569;font-weight:700}
+    .rank-3{color:#92400e;font-weight:700}
+    .num-gold{color:#b45309;font-weight:700;font-size:15px}
+    .num-silver{color:#475569;font-weight:700;font-size:15px}
+    .num-bronze{color:#92400e;font-weight:700;font-size:15px}
 
     /* empty / loading */
-    .empty{text-align:center;padding:50px 20px;color:#4a6a8a}
+    .empty{text-align:center;padding:50px 20px;color:#94a3b8}
     .empty .ico{font-size:44px;margin-bottom:10px}
-    .loading{text-align:center;padding:50px;color:#4a6a8a}
-    .spin{display:inline-block;width:28px;height:28px;border:3px solid #1e3050;border-top-color:#3a7adf;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px}
+    .loading{text-align:center;padding:50px;color:#94a3b8}
+    .spin{display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px}
     @keyframes spin{to{transform:rotate(360deg)}}
+
+
+    /* ── COMBAT CARD LAYOUT ── */
+    .combat-section { margin: 0 20px 24px; }
+    .combat-section-header {
+      display: flex; align-items: center; gap: 10px;
+      background: linear-gradient(90deg,#dbeafe,#eff6ff);
+      border-left: 4px solid #2563eb; border-radius: 6px 6px 0 0;
+      padding: 10px 16px; margin-bottom: 1px;
+    }
+    .combat-section-title { font-size: 13px; font-weight: 700; color: #1d4ed8; letter-spacing: .5px; text-transform: uppercase; }
+    .combat-section-count { font-size: 11px; color: #3b82f6; background: #dbeafe; padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+
+    .match-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px; margin-bottom: 4px; }
+
+    .match-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+      overflow: hidden; transition: border-color .2s, box-shadow .2s;
+    }
+    .match-card:hover { border-color: #93c5fd; box-shadow: 0 4px 16px rgba(37,99,235,.12); }
+    .match-card.has-result { border-left: 3px solid #22c55e; }
+    .match-card.no-result  { border-left: 3px solid #cbd5e1; }
+    .match-card.row-new    { border-left: 3px solid #f59e0b; animation: cardFlash 2.5s ease forwards; }
+    @keyframes cardFlash { 0%,60%{background:#fefce8;} 100%{background:#fff;} }
+
+    .match-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+      font-size: 11px;
+    }
+    .match-stt { color: #64748b; font-weight: 600; }
+    .match-type { color: #334155; font-size: 11px; }
+    .match-hang { color: #475569; font-size: 11px; }
+
+    .match-body { padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+
+    .fighter {
+      flex: 1; display: flex; flex-direction: column; gap: 3px;
+      padding: 8px 10px; border-radius: 6px; min-width: 0;
+      transition: background .2s;
+    }
+    .fighter.red  { background: #fff5f5; border: 1px solid #fecaca; }
+    .fighter.blue { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .fighter.winner { opacity: 1; }
+    .fighter.loser  { opacity: .5; }
+
+    .fighter-corner { font-size: 10px; font-weight: 700; letter-spacing: .5px; margin-bottom: 2px; }
+    .fighter.red  .fighter-corner { color: #dc2626; }
+    .fighter.blue .fighter-corner { color: #2563eb; }
+    .fighter-name { font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fighter-unit { font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fighter-crown { font-size: 14px; margin-top: 2px; }
+
+    .vs-divider { font-size: 12px; font-weight: 800; color: #94a3b8; flex-shrink: 0; }
+
+    .match-footer { padding: 6px 12px; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+    .match-result-label { font-size: 11px; }
+    .match-reason-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #dbeafe; color: #1d4ed8; }
+    .match-pending { font-size: 11px; color: #92400e; background: #fef3c7; padding: 2px 8px; border-radius: 10px; border: 1px solid #fde68a; }
 
     /* toast */
     .toast-box{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999}
-    .toast{background:#1a3a5a;border:1px solid #2a6aba;border-radius:10px;padding:10px 15px;font-size:13px;color:#c0e0ff;max-width:310px;animation:tin .3s ease;box-shadow:0 4px 16px rgba(0,0,0,.4)}
-    .toast.new{border-color:#4cdf80;background:#0a2a1a;color:#a0ffb0}
+    .toast{background:#fff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 15px;font-size:13px;color:#1e293b;max-width:310px;animation:tin .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+    .toast.new{border-color:#86efac;background:#f0fdf4;color:#15803d}
     @keyframes tin{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
   </style>
 </head>
@@ -123,6 +186,14 @@
       <button class="san-btn" onclick="fSan('c','san3',this)">Sân 3</button>
       <button class="san-btn" onclick="fSan('c','san4',this)">Sân 4</button>
     </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <span style="font-size:12px;color:#475569;white-space:nowrap">📋 Danh sách:</span>
+      <select id="listFilter" onchange="rCombat()"
+        style="background:#fff;border:1px solid #cbd5e1;border-radius:16px;color:#1e293b;
+               font-size:12px;padding:4px 10px;outline:none;cursor:pointer">
+        <option value="all">Tất cả</option>
+      </select>
+    </div>
     <input class="search-box" id="qC" type="text" placeholder="🔍 Tên VĐV, đơn vị..." oninput="rCombat()">
     <div class="stats-row">
       <div class="chip chip-g" id="cDone">✅ 0 có KQ</div>
@@ -144,7 +215,9 @@
     </div>
     <input class="search-box" id="qCM" type="text" placeholder="🔍 Tên VĐV, nội dung..." oninput="rCombatMedal()">
     <div class="stats-row">
-      <div class="chip chip-g" id="cmCount">🏅 0 huy chương</div>
+      <div class="chip chip-g" id="cmGold">🥇 0</div>
+      <div class="chip chip-b" id="cmSilver">🥈 0</div>
+      <div class="chip chip-g" id="cmBronze">🥉 0</div>
     </div>
   </div>
   <div class="tbl-wrap" id="wCombatMedal"><div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div></div>
@@ -216,7 +289,9 @@ let perfMedals   = [];   // huy chương hội diễn
 let summaryRows  = [];   // tổng sắp
 
 let fC  = 'all', fCM = 'all', fPM = 'all', fPR = 'all';
+let fCList = 'all';  // filter theo danh sách đối kháng
 let prevC = new Set(), prevPM = new Set();
+let newCombatKeys = new Set();
 let perfAllData = [];   // toàn bộ VĐV hội diễn (kể cả chưa có huy chương)
 
 // ════════════════════════════════════════════════
@@ -241,17 +316,30 @@ function fSan(tab, san, btn) {
 // ════════════════════════════════════════════════
 // FETCH
 // ════════════════════════════════════════════════
+async function fetchWithTimeout(url, ms=8000) {
+  const ctrl = new AbortController();
+  const tid = setTimeout(()=>ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, {signal: ctrl.signal});
+    clearTimeout(tid);
+    return r;
+  } catch(e) {
+    clearTimeout(tid);
+    throw e;
+  }
+}
+
 async function fetchAll() {
   let ok = true;
   try {
     // 1) results (combat)
-    const r1 = await fetch(`${FB}/results.json`);
+    const r1 = await fetchWithTimeout(`${FB}/results.json`);
     if (r1.ok) {
       const d = await r1.json();
       const flat = [];
       if (d) for (const [sk, td] of Object.entries(d)) {
         if (td) for (const [, res] of Object.entries(td)) {
-          if (res && res.STT != null) flat.push({...res, _san:sk, _key:`${sk}_${res.STT}`});
+          if (res && res.STT != null) flat.push({...res, _san:sk, _key:`${sk}_${res.list_name||'default'}_${res.STT}`});
         }
       }
       flat.sort((a,b)=> {
@@ -259,13 +347,21 @@ async function fetchAll() {
         return s||Number(a.STT)-Number(b.STT);
       });
       const nk = new Set(flat.map(r=>r._key));
-      if (prevC.size>0) flat.filter(r=>!prevC.has(r._key)).forEach(r=>toast(r,'combat'));
+      const newCombat = prevC.size>0 ? flat.filter(r=>!prevC.has(r._key)) : [];
+      newCombatKeys = new Set(newCombat.map(r=>r._key));
+      if (prevC.size>0) newCombat.forEach(r=>toast(r,'combat'));
       prevC = nk; combatData = flat;
+      // Cập nhật dropdown danh sách
+      const lists = [...new Set(flat.map(r=>r.list_name||'(Chưa phân loại)'))].sort();
+      const sel = document.getElementById('listFilter');
+      const curVal = sel.value;
+      sel.innerHTML = '<option value="all">Tất cả</option>' +
+        lists.map(l=>`<option value="${l}" ${l===curVal?'selected':''}>${l}</option>`).join('');
       rCombat(); rCombatMedal();
     }
 
     // 2) performance (hội diễn medals)
-    const r2 = await fetch(`${FB}/performance.json`);
+    const r2 = await fetchWithTimeout(`${FB}/performance.json`);
     if (r2.ok) {
       const d = await r2.json();
       // Thu thập TẤT CẢ VĐV hội diễn (dùng cho tab Kết quả)
@@ -300,14 +396,14 @@ async function fetchAll() {
     }
 
     // 3) summary
-    const r3 = await fetch(`${FB}/summary.json`);
+    const r3 = await fetchWithTimeout(`${FB}/summary.json`);
     if (r3.ok) {
       const d = await r3.json();
       summaryRows = (d && d.rows) ? d.rows : [];
       rSummary();
     }
 
-  } catch(e) { ok = false; }
+  } catch(e) { ok = false; console.error('fetchAll error:', e); }
   updateStatus(ok);
 }
 
@@ -316,8 +412,10 @@ async function fetchAll() {
 // ════════════════════════════════════════════════
 function rCombat() {
   const q = document.getElementById('qC').value.toLowerCase().trim();
+  const fCList = document.getElementById('listFilter').value;
   const rows = combatData.filter(r => {
     if (fC!=='all' && r._san!==fC) return false;
+    if (fCList!=='all' && (r.list_name||'(Chưa phân loại)')!==fCList) return false;
     if (q && ![r.Ten_Do,r.Donvi_Do,r.Ten_Xanh,r.Donvi_Xanh,r.winner_name,r.Loai_Tran,r.Hang_can].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -325,115 +423,110 @@ function rCombat() {
   document.getElementById('cTotal').textContent = `📊 ${rows.length} trận`;
   const w = document.getElementById('wCombat');
   if (!rows.length) { w.innerHTML = emptyHTML('Không có kết quả phù hợp'); return; }
+
   w.innerHTML = `<table>
-    <thead><tr><th>STT</th><th>Sân</th><th>Nội dung</th><th>VĐV</th><th>Kết quả</th><th>Hình thức thắng</th></tr></thead>
-    <tbody>${rows.map(r=>{
-      const sn = r._san.replace('san','');
-      return `<tr>
-        <td><span class="badge badge-stt">${esc(String(r.STT))}</span></td>
-        <td><span class="badge-san san-${sn}">Sân ${sn}</span></td>
-        <td>${esc(r.Loai_Tran||'')}${r.Hang_can?` <small style="color:#5a7a9a">– ${esc(r.Hang_can)}</small>`:''}</td>
-        <td><span class="team-r">${esc(r.Ten_Do||'—')}</span><br><small style="color:#4a6a8a">${esc(r.Donvi_Do||'')}</small>
-            <span class="vs">VS</span>
-            <span class="team-b">${esc(r.Ten_Xanh||'—')}</span><br><small style="color:#4a6a8a">${esc(r.Donvi_Xanh||'')}</small></td>
-        <td>${r.winner_name
-          ? `<div class="win-name">🏆 ${esc(r.winner_name)}</div><div class="win-unit">${esc(r.winner_unit||'')}</div>`
-          : `<span class="tag-pending">⏳ Chưa có</span>`}</td>
-        <td>${r.reason?`<span class="tag-reason">${esc(r.reason)}</span>`:''}</td>
+    <thead><tr>
+      <th style="width:50px">STT</th>
+      <th style="width:90px">Loại trận</th>
+      <th style="width:110px">Hạng cân</th>
+      <th>VĐV Đỏ</th>
+      <th style="width:140px">Đơn vị Đỏ</th>
+      <th>VĐV Xanh</th>
+      <th style="width:140px">Đơn vị Xanh</th>
+      <th style="width:200px">Thắng cuộc</th>
+    </tr></thead>
+    <tbody>${rows.map((r,idx)=>{
+      const isNew = newCombatKeys.has(r._key);
+      const hasRes = !!r.winner_name;
+      const rowBg = isNew ? 'background:#fefce8' : '';
+      return `<tr class="${isNew?'row-new':''}" style="${rowBg}">
+        <td style="text-align:center"><span class="badge badge-stt">${esc(String(r.STT))}</span></td>
+        <td style="text-align:center">
+          <span style="font-size:11px;padding:2px 7px;border-radius:8px;font-weight:600;
+            background:${r.Loai_Tran==='Chung kết'?'#fef9c3':r.Loai_Tran==='Bán kết'?'#dbeafe':'#dcfce7'};
+            color:${r.Loai_Tran==='Chung kết'?'#b45309':r.Loai_Tran==='Bán kết'?'#1d4ed8':'#15803d'}">
+            ${esc(r.Loai_Tran||'')}
+          </span>
+        </td>
+        <td style="text-align:center;font-size:12px;color:#475569">${esc(r.Hang_can||'')}</td>
+        <td style="color:#dc2626;font-weight:${hasRes&&r.winner_team==='red'?'700':'400'}">${esc(r.Ten_Do||'—')}</td>
+        <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Do||'')}</td>
+        <td style="color:#2563eb;font-weight:${hasRes&&r.winner_team==='blue'?'700':'400'}">${esc(r.Ten_Xanh||'—')}</td>
+        <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Xanh||'')}</td>
+        <td>${hasRes
+          ? `<span style="color:#16a34a;font-weight:700">🏆 ${esc(r.winner_name)}</span>
+             <span style="font-size:11px;color:#64748b;display:block">${esc(r.winner_unit||'')}</span>
+             ${r.reason?`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:#dbeafe;color:#1d4ed8">${esc(r.reason)}</span>`:''}`
+          : `<span style="color:#94a3b8;font-size:12px">⏳ Chưa có</span>`
+        }</td>
       </tr>`;
     }).join('')}</tbody></table>`;
 }
 
 // ════════════════════════════════════════════════
 // RENDER: HUY CHƯƠNG ĐỐI KHÁNG
-// Sắp xếp: theo (Nhóm tuổi, Hạng cân) → Vàng → Bạc → Đồng
 // ════════════════════════════════════════════════
 function rCombatMedal() {
   const q = document.getElementById('qCM').value.toLowerCase().trim();
-
-  // Tính huy chương từ combatData
-  // Chung kết: người thắng = Vàng, người thua = Bạc
-  // Bán kết: người thua = Đồng
   const medals = [];
   const mOrder = {'Vàng':1,'Bạc':2,'Đồng 1':3,'Đồng 2':4};
 
-  // Gom theo (san, nhomtuoi, hang_can)
-  const groups = {};
+  const grouped = {};
   for (const r of combatData) {
-    if (fCM !== 'all' && r._san !== fCM) continue;
-    const loai = (r.Loai_Tran || '').toLowerCase();
-    const key  = `${r._san}||${r.Nhom_Tuoi||r.Nhomtuoi||''}||${r.Hang_can||r.Hangcan||''}`;
-    if (!groups[key]) groups[key] = {san: r._san, nhomtuoi: r.Nhom_Tuoi||r.Nhomtuoi||'', hangcan: r.Hang_can||r.Hangcan||'', chungket: null, banket:[]};
-    if (loai.includes('chung')) groups[key].chungket = r;
-    else if (loai.includes('bán') || loai.includes('ban ket')) groups[key].banket.push(r);
-  }
+    if (fCM!=='all' && r._san!==fCM) continue;
+    const key = `${r.Hang_can||''}||${r.Loai_Tran||''}`;
+    const nhomtuoi = r.Hang_can||'';
+    const hangcan  = r.Loai_Tran||'';
+    if (!grouped[key]) grouped[key] = { nhomtuoi, hangcan, items:[] };
 
-  for (const [, g] of Object.entries(groups)) {
-    const {san, nhomtuoi, hangcan, chungket, banket} = g;
-    if (chungket && chungket.winner_name) {
-      // Thắng chung kết = Vàng
-      const isRed = chungket.winner_team === 'red';
-      const winner = chungket.winner_name || (isRed ? chungket.Ten_Do : chungket.Ten_Xanh);
-      const winUnit = chungket.winner_unit || (isRed ? chungket.Donvi_Do : chungket.Donvi_Xanh);
-      const loser  = isRed ? chungket.Ten_Xanh  : chungket.Ten_Do;
-      const loseUnit = isRed ? chungket.Donvi_Xanh : chungket.Donvi_Do;
-      medals.push({san, nhomtuoi, hangcan, medal:'Vàng', ten: winner||'', donvi: winUnit||''});
-      medals.push({san, nhomtuoi, hangcan, medal:'Bạc',  ten: loser||'',  donvi: loseUnit||''});
+    if (r.winner_name && r.Loai_Tran==='Chung kết') {
+      grouped[key].items.push({ medal:'Vàng', ten:r.winner_name, donvi:r.winner_unit||'', san:r._san });
+      const loser = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+      grouped[key].items.push({ medal:'Bạc', ten:loser.ten||'—', donvi:loser.donvi||'', san:r._san });
     }
-    banket.forEach((r, i) => {
-      if (!r.winner_name) return;
-      const isRed = r.winner_team === 'red';
-      // Thua bán kết = Đồng
-      const loser    = isRed ? r.Ten_Xanh   : r.Ten_Do;
-      const loseUnit = isRed ? r.Donvi_Xanh : r.Donvi_Do;
-      medals.push({san, nhomtuoi, hangcan, medal:`Đồng ${i+1}`, ten: loser||'', donvi: loseUnit||''});
-    });
+    if (r.winner_name && r.Loai_Tran==='Bán kết') {
+      const loser = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+      grouped[key].items.push({ medal:'Đồng 1', ten:loser.ten||'—', donvi:loser.donvi||'', san:r._san });
+    }
   }
 
-  // Lọc theo search
-  const filtered = medals.filter(m => {
-    if (!q) return true;
-    return [m.ten, m.donvi, m.hangcan, m.nhomtuoi].join(' ').toLowerCase().includes(q);
-  });
+  const allMedals = Object.values(grouped).flatMap(g=>g.items);
+  const filtered = allMedals.filter(m =>
+    !q || [m.ten,m.donvi,m.medal].join(' ').toLowerCase().includes(q)
+  );
 
-  document.getElementById('cmCount').textContent = `🏅 ${filtered.length} huy chương`;
+  document.getElementById('cmGold').textContent   = `🥇 ${filtered.filter(m=>m.medal==='Vàng').length}`;
+  document.getElementById('cmSilver').textContent = `🥈 ${filtered.filter(m=>m.medal==='Bạc').length}`;
+  document.getElementById('cmBronze').textContent = `🥉 ${filtered.filter(m=>m.medal.startsWith('Đồng')).length}`;
+
   const w = document.getElementById('wCombatMedal');
   if (!filtered.length) { w.innerHTML = emptyHTML('Chưa có huy chương đối kháng'); return; }
-
-  // Nhóm theo (nhomtuoi, hangcan) rồi sắp xếp trong từng nhóm: Vàng→Bạc→Đồng
-  const grouped = {};
-  for (const m of filtered) {
-    const gk = `${m.nhomtuoi}||${m.hangcan}`;
-    if (!grouped[gk]) grouped[gk] = {nhomtuoi: m.nhomtuoi, hangcan: m.hangcan, items:[]};
-    grouped[gk].items.push(m);
-  }
-  // Sắp xếp items trong nhóm
-  for (const g of Object.values(grouped)) {
-    g.items.sort((a,b) => (mOrder[a.medal]||9) - (mOrder[b.medal]||9));
-  }
 
   const mIcon = {'Vàng':'🥇','Bạc':'🥈','Đồng 1':'🥉','Đồng 2':'🥉'};
   const mCls  = {'Vàng':'medal-gold','Bạc':'medal-silver','Đồng 1':'medal-bronze','Đồng 2':'medal-bronze'};
 
   let tbody = '';
   for (const [, g] of Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b,'vi'))) {
-    const label = [g.nhomtuoi, g.hangcan].filter(Boolean).join(' – ');
+    const hasAny = g.items.some(m => !q || [m.ten,m.donvi,m.medal].join(' ').toLowerCase().includes(q));
+    if (!hasAny) continue;
+    const label = g.nhomtuoi;
     tbody += `<tr class="group-header"><td colspan="4">📂 ${esc(label||'Nội dung')}</td></tr>`;
-    for (const m of g.items) {
+    for (const m of g.items.sort((a,b)=>(mOrder[a.medal]||9)-(mOrder[b.medal]||9))) {
+      if (q && ![m.ten,m.donvi,m.medal].join(' ').toLowerCase().includes(q)) continue;
       const sn = m.san.replace('san','');
       tbody += `<tr>
         <td><span class="badge-san san-${sn}">Sân ${sn}</span></td>
         <td><span class="medal ${mCls[m.medal]||'medal-bronze'}">${mIcon[m.medal]||'🏅'} ${esc(m.medal)}</span></td>
         <td style="font-weight:600">${esc(m.ten||'—')}</td>
-        <td style="color:#7a9cc0">${esc(m.donvi||'—')}</td>
+        <td style="color:#475569">${esc(m.donvi||'—')}</td>
       </tr>`;
     }
   }
-
   w.innerHTML = `<table>
     <thead><tr><th>Sân</th><th>Huy chương</th><th>VĐV</th><th>Đơn vị</th></tr></thead>
     <tbody>${tbody}</tbody></table>`;
 }
+
 
 // ════════════════════════════════════════════════
 // RENDER: KẾT QUẢ HỘI DIỄN (tất cả VĐV, nhóm theo Nội dung, sắp xếp theo điểm)
@@ -486,20 +579,20 @@ function rPerfResult() {
       const sn     = (p._san||'').replace('san','');
       const scores = Array.isArray(p.scores) ? p.scores : [];
       const scoresStr = scores.length
-        ? `<span style="color:#4a6a8a;font-size:11px">[${scores.map(s=>typeof s==='number'?s.toFixed(2):s).join(', ')}]</span>`
+        ? `<span style="color:#94a3b8;font-size:11px">[${scores.map(s=>typeof s==='number'?s.toFixed(2):s).join(', ')}]</span>`
         : '';
       tbody += `<tr>
-        <td style="color:#5a7a9a;font-size:12px">${stt}</td>
+        <td style="color:#64748b;font-size:12px">${stt}</td>
         <td><span class="badge-san san-${sn}">Sân ${sn}</span></td>
         <td style="font-weight:600">${esc(p.Ten||'—')}</td>
-        <td style="color:#7a9cc0">${esc(p.Donvi||'—')}</td>
-        <td style="color:#5a7a9a;font-size:12px">${esc(p.Nhomtuoi||'')}</td>
+        <td style="color:#475569">${esc(p.Donvi||'—')}</td>
+        <td style="color:#64748b;font-size:12px">${esc(p.Nhomtuoi||'')}</td>
         <td>
           ${rank ? `<span class="rank-tag">Hạng ${esc(String(rank))}</span>` : ''}
-          <span style="color:#7abcff;font-weight:700;margin-left:4px">${score}</span>
+          <span style="color:#2563eb;font-weight:700;margin-left:4px">${score}</span>
           <div style="margin-top:3px">${scoresStr}</div>
         </td>
-        <td>${medal ? `<span class="medal ${mCls[medal]||'medal-bronze'}">${mIcon[medal]||'🏅'} ${esc(medal)}</span>` : '<span style="color:#3a5a7a;font-size:12px">—</span>'}</td>
+        <td>${medal ? `<span class="medal ${mCls[medal]||'medal-bronze'}">${mIcon[medal]||'🏅'} ${esc(medal)}</span>` : '<span style="color:#94a3b8;font-size:12px">—</span>'}</td>
       </tr>`;
     }
   }
@@ -558,9 +651,9 @@ function rPerfMedal() {
         <td><span class="badge-san san-${sn}">Sân ${sn}</span></td>
         <td><span class="medal ${mCls[medal]||'medal-bronze'}">${mIcon[medal]||'🏅'} ${esc(medal)}</span></td>
         <td style="font-weight:600">${esc(m.Ten||'—')}</td>
-        <td style="color:#7a9cc0">${esc(m.Donvi||'—')}</td>
-        <td style="color:#5a7a9a;font-size:12px">${esc(m.Nhomtuoi||'')}</td>
-        <td>${rank?`<span class="rank-tag">Hạng ${esc(String(rank))}</span>`:''} ${typeof m.total_score==='number'?`<span style="color:#7abcff;font-weight:600;margin-left:4px">${m.total_score.toFixed(2)}</span>`:''}</td>
+        <td style="color:#475569">${esc(m.Donvi||'—')}</td>
+        <td style="color:#64748b;font-size:12px">${esc(m.Nhomtuoi||'')}</td>
+        <td>${rank?`<span class="rank-tag">Hạng ${esc(String(rank))}</span>`:''} ${typeof m.total_score==='number'?`<span style="color:#2563eb;font-weight:600;margin-left:4px">${m.total_score.toFixed(2)}</span>`:''}</td>
       </tr>`;
     }
   }
@@ -587,11 +680,11 @@ function rSummary() {
     const trophy = xh===1?'🥇 ':xh===2?'🥈 ':xh===3?'🥉 ':'';
     return `<tr>
       <td class="${rankCls}">${trophy}${r.xephang}</td>
-      <td style="font-weight:${xh<=3?700:400}">${esc(r.donvi)}</td>
+      <td style="font-weight:${xh<=3?700:400};color:#1e293b">${esc(r.donvi)}</td>
       <td class="num-gold">${r.vang||0}</td>
       <td class="num-silver">${r.bac||0}</td>
       <td class="num-bronze">${r.dong||0}</td>
-      <td style="color:#7a9cc0">${(r.vang||0)+(r.bac||0)+(r.dong||0)}</td>
+      <td style="color:#475569">${(r.vang||0)+(r.bac||0)+(r.dong||0)}</td>
     </tr>`;
   }).join('');
 
