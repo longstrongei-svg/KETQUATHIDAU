@@ -471,13 +471,14 @@ function rCombatMedal() {
   const medals = [];
   const mOrder = {'Vàng':1,'Bạc':2,'Đồng 1':3,'Đồng 2':4};
 
+  // Đếm số trận Bán kết theo hạng cân để gán Đồng 1 / Đồng 2
+  const bronzeCount = {};
   const grouped = {};
   for (const r of combatData) {
     if (fCM!=='all' && r._san!==fCM) continue;
-    const key = `${r.Hang_can||''}||${r.Loai_Tran||''}`;
-    const nhomtuoi = r.Hang_can||'';
-    const hangcan  = r.Loai_Tran||'';
-    if (!grouped[key]) grouped[key] = { nhomtuoi, hangcan, items:[] };
+    // Key nhóm chỉ theo hạng cân → Vàng, Bạc, Đồng cùng 1 nhóm
+    const key = r.Hang_can || '';
+    if (!grouped[key]) grouped[key] = { nhomtuoi: key, items:[] };
 
     if (r.winner_name && r.Loai_Tran==='Chung kết') {
       grouped[key].items.push({ medal:'Vàng', ten:r.winner_name, donvi:r.winner_unit||'', san:r._san });
@@ -486,7 +487,9 @@ function rCombatMedal() {
     }
     if (r.winner_name && r.Loai_Tran==='Bán kết') {
       const loser = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
-      grouped[key].items.push({ medal:'Đồng 1', ten:loser.ten||'—', donvi:loser.donvi||'', san:r._san });
+      bronzeCount[key] = (bronzeCount[key]||0) + 1;
+      const medalLabel = bronzeCount[key] === 1 ? 'Đồng 1' : 'Đồng 2';
+      grouped[key].items.push({ medal: medalLabel, ten:loser.ten||'—', donvi:loser.donvi||'', san:r._san });
     }
   }
 
