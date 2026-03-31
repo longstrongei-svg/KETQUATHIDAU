@@ -443,8 +443,8 @@ function rCombat() {
         <td style="text-align:center"><span class="badge badge-stt">${esc(String(r.STT))}</span></td>
         <td style="text-align:center">
           <span style="font-size:11px;padding:2px 7px;border-radius:8px;font-weight:600;
-            background:${r.Loai_Tran==='Chung kết'?'#fef9c3':r.Loai_Tran==='Bán kết'?'#dbeafe':'#dcfce7'};
-            color:${r.Loai_Tran==='Chung kết'?'#b45309':r.Loai_Tran==='Bán kết'?'#1d4ed8':'#15803d'}">
+            background:${(r.Loai_Tran||'').toLowerCase()==='chung kết'?'#fef9c3':(r.Loai_Tran||'').toLowerCase()==='bán kết'?'#dbeafe':'#dcfce7'};
+            color:${(r.Loai_Tran||'').toLowerCase()==='chung kết'?'#b45309':(r.Loai_Tran||'').toLowerCase()==='bán kết'?'#1d4ed8':'#15803d'}">
             ${esc(r.Loai_Tran||'')}
           </span>
         </td>
@@ -480,12 +480,13 @@ function rCombatMedal() {
     const key = r.Hang_can || '';
     if (!grouped[key]) grouped[key] = { nhomtuoi: key, items:[] };
 
-    if (r.winner_name && r.Loai_Tran==='Chung kết') {
-      grouped[key].items.push({ medal:'Vàng', ten:r.winner_name, donvi:r.winner_unit||'', san:r._san });
-      const loser = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+    if (r.winner_name && (r.Loai_Tran||'').toLowerCase()==='chung kết') {
+      const winner = r.winner_team==='red' ? {ten:r.Ten_Do,donvi:r.Donvi_Do} : {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh};
+      const loser  = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+      grouped[key].items.push({ medal:'Vàng', ten:winner.ten||r.winner_name, donvi:winner.donvi||r.winner_unit||'', san:r._san });
       grouped[key].items.push({ medal:'Bạc', ten:loser.ten||'—', donvi:loser.donvi||'', san:r._san });
     }
-    if (r.winner_name && r.Loai_Tran==='Bán kết') {
+    if (r.winner_name && (r.Loai_Tran||'').toLowerCase()==='bán kết') {
       const loser = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
       bronzeCount[key] = (bronzeCount[key]||0) + 1;
       const medalLabel = bronzeCount[key] === 1 ? 'Đồng 1' : 'Đồng 2';
