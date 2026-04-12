@@ -246,13 +246,6 @@
 <!-- ══════════════════ TAB 3: KẾT QUẢ HỘI DIỄN ══════════════════ -->
 <div id="tab-perf-result" class="tab-content">
   <div class="controls">
-    <div class="san-tabs" id="sanPR">
-      <button class="san-btn active" onclick="fSan('pr','all',this)">🏟️ Tất cả</button>
-      <button class="san-btn" onclick="fSan('pr','san1',this)">Sân 1</button>
-      <button class="san-btn" onclick="fSan('pr','san2',this)">Sân 2</button>
-      <button class="san-btn" onclick="fSan('pr','san3',this)">Sân 3</button>
-      <button class="san-btn" onclick="fSan('pr','san4',this)">Sân 4</button>
-    </div>
     <input class="search-box" id="qPR" type="text" placeholder="🔍 Tên VĐV, đơn vị, nội dung..." oninput="rPerfResult()">
     <div class="stats-row">
       <div class="chip chip-g" id="prCount">🎽 0 VĐV</div>
@@ -265,13 +258,6 @@
 <!-- ══════════════════ TAB 3: HUY CHƯƠNG HỘI DIỄN ══════════════════ -->
 <div id="tab-perf-medal" class="tab-content">
   <div class="controls">
-    <div class="san-tabs" id="sanPM">
-      <button class="san-btn active" onclick="fSan('pm','all',this)">🏟️ Tất cả</button>
-      <button class="san-btn" onclick="fSan('pm','san1',this)">Sân 1</button>
-      <button class="san-btn" onclick="fSan('pm','san2',this)">Sân 2</button>
-      <button class="san-btn" onclick="fSan('pm','san3',this)">Sân 3</button>
-      <button class="san-btn" onclick="fSan('pm','san4',this)">Sân 4</button>
-    </div>
     <input class="search-box" id="qPM" type="text" placeholder="🔍 Tên VĐV, đơn vị..." oninput="rPerfMedal()">
     <div class="stats-row">
       <div class="chip chip-g" id="pmCount">🏅 0 huy chương</div>
@@ -413,23 +399,39 @@ async function fetchAll() {
           }
         }
       }
-      // Dedup allPerf theo Ten+Donvi+Noidung (ưu tiên manual_medal, rồi total_score cao nhất)
+      // Dedup allPerf theo Ten+Donvi+Noidung+STT (ưu tiên manual_medal, rồi sân số nhỏ)
       const dedupAll = {};
       for (const p of allPerf) {
-        const dk = `${p.Ten||''}|${p.Donvi||''}|${p.Noidung||''}`;
+        const dk = `${p.Ten||''}|${p.Donvi||''}|${p.Noidung||''}|${p.STT||''}`;
         const ex = dedupAll[dk];
         if (!ex) { dedupAll[dk] = p; continue; }
         const hasM = !!(p.manual_medal), exM = !!(ex.manual_medal);
         if (hasM && !exM) { dedupAll[dk] = p; continue; }
         if (!hasM && exM) continue;
-        if ((p.total_score||0) > (ex.total_score||0)) dedupAll[dk] = p;
+        // ưu tiên sân số nhỏ hơn (sân thi thật thường là sân nhỏ nhất có dữ liệu)
+        const sn = +p._san.replace('san',''), se = +ex._san.replace('san','');
+        if (sn < se) { dedupAll[dk] = p; }
       }
       perfAllData = Object.values(dedupAll);
       rPerfResult();
 
-      const nk2 = new Set(medals.map(m=>m._key));
-      if (prevPM.size>0) medals.filter(m=>!prevPM.has(m._key)).forEach(m=>toast(m,'perf'));
-      prevPM = nk2; perfMedals = medals; rPerfMedal();
+      // Dedup medals theo Ten+Donvi+Noidung (ưu tiên manual_medal, rồi sân số nhỏ)
+      const dedupMedals = {};
+      for (const m of medals) {
+        const dk = `${m.Ten||''}|${m.Donvi||''}|${m.Noidung||''}`;
+        const ex = dedupMedals[dk];
+        if (!ex) { dedupMedals[dk] = m; continue; }
+        const hasM = !!(m.manual_medal), exM = !!(ex.manual_medal);
+        if (hasM && !exM) { dedupMedals[dk] = m; continue; }
+        if (!hasM && exM) continue;
+        // cùng trạng thái → ưu tiên sân số nhỏ hơn
+        const sn = +m._san.replace('san',''), se = +ex._san.replace('san','');
+        if (sn < se) { dedupMedals[dk] = m; }
+      }
+      const dedupedMedals = Object.values(dedupMedals);
+      const nk2 = new Set(dedupedMedals.map(m=>m._key));
+      if (prevPM.size>0) dedupedMedals.filter(m=>!prevPM.has(m._key)).forEach(m=>toast(m,'perf'));
+      prevPM = nk2; perfMedals = dedupedMedals; rPerfMedal();
     }
 
     // 3) summary
@@ -595,8 +597,8 @@ function rPerfResult() {
   const mIcon  = {'Vàng':'🥇','Bạc':'🥈','Đồng 1':'🥉','Đồng 2':'🥉'};
   const mCls   = {'Vàng':'medal-gold','Bạc':'medal-silver','Đồng 1':'medal-bronze','Đồng 2':'medal-bronze'};
 
+  // Hội diễn: không filter theo _san vì sau dedup _san chỉ là sân đại diện
   const rows = perfAllData.filter(p => {
-    if (fPR !== 'all' && p._san !== fPR) return false;
     if (q && ![p.Ten,p.Donvi,p.Noidung,p.Nhomtuoi].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -668,8 +670,8 @@ function rPerfMedal() {
   const q = document.getElementById('qPM').value.toLowerCase().trim();
   const mOrder = {'Vàng':1,'Bạc':2,'Đồng 1':3,'Đồng 2':4};
 
+  // Hội diễn: không filter theo _san vì sau dedup _san chỉ là sân đại diện
   let rows = perfMedals.filter(m => {
-    if (fPM!=='all' && m._san!==fPM) return false;
     if (q && ![m.Ten,m.Donvi,m.Noidung,m.Nhomtuoi].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
