@@ -155,6 +155,26 @@
     .toast{background:#fff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 15px;font-size:13px;color:#1e293b;max-width:310px;animation:tin .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.12)}
     .toast.new{border-color:#86efac;background:#f0fdf4;color:#15803d}
     @keyframes tin{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+    /* ── POPUP HUY CHƯƠNG ĐOÀN ── */
+    .popup-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s ease}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .popup-box{background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);width:100%;max-width:680px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+    .popup-header{background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .popup-title{color:#fff;font-size:16px;font-weight:700}
+    .popup-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+    .popup-close:hover{background:rgba(255,255,255,.35)}
+    .popup-stats{display:flex;gap:10px;padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0}
+    .popup-chip{padding:4px 12px;border-radius:12px;font-size:13px;font-weight:700}
+    .popup-body{overflow-y:auto;padding:16px 20px;flex:1}
+    .popup-group{margin-bottom:14px}
+    .popup-group-title{font-size:12px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.4px;padding:6px 10px;background:#eff6ff;border-left:3px solid #2563eb;border-radius:0 6px 6px 0;margin-bottom:6px}
+    .popup-medal-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;margin-bottom:4px;background:#fafbfc;border:1px solid #f1f5f9}
+    .popup-medal-row:hover{background:#eff6ff;border-color:#bfdbfe}
+    .popup-noidung{font-size:13px;color:#334155;flex:1}
+    .summary-row-click{cursor:pointer;transition:background .15s}
+    .summary-row-click:hover td{background:#eff6ff!important}
+    .summary-row-click td:nth-child(2){text-decoration:underline;text-decoration-color:#93c5fd;text-underline-offset:3px}
   </style>
 </head>
 <body>
@@ -272,6 +292,23 @@
   <div class="tbl-wrap" id="wSummary"><div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div></div>
 </div>
 
+
+<!-- ── POPUP HUY CHƯƠNG ĐOÀN ── -->
+<div id="donviPopup" class="popup-overlay" style="display:none" onclick="if(event.target===this)closePopup()">
+  <div class="popup-box">
+    <div class="popup-header">
+      <div class="popup-title" id="popupTitle">🏛️ Huy chương đoàn</div>
+      <button class="popup-close" onclick="closePopup()">✕</button>
+    </div>
+    <div class="popup-stats">
+      <span class="popup-chip" style="background:#fef9c3;color:#b45309;border:1px solid #fde68a" id="popupGold">🥇 0</span>
+      <span class="popup-chip" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1" id="popupSilver">🥈 0</span>
+      <span class="popup-chip" style="background:#fef3e2;color:#92400e;border:1px solid #fed7aa" id="popupBronze">🥉 0</span>
+      <span class="popup-chip" style="background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe" id="popupTotal">🏅 0 tổng</span>
+    </div>
+    <div class="popup-body" id="popupBody"></div>
+  </div>
+</div>
 <div class="toast-box" id="toastBox"></div>
 
 <script>
@@ -408,7 +445,7 @@ async function fetchAll() {
 }
 
 // ════════════════════════════════════════════════
-// RENDER: ĐỐI KHÁNG
+// RENDER: ĐỐI KHÁNG — nhóm theo nhóm tuổi (list_name), hiển thị tất cả trận
 // ════════════════════════════════════════════════
 function rCombat() {
   const q = document.getElementById('qC').value.toLowerCase().trim();
@@ -422,45 +459,80 @@ function rCombat() {
   document.getElementById('cDone').textContent  = `✅ ${rows.filter(r=>r.winner_name).length} có KQ`;
   document.getElementById('cTotal').textContent = `📊 ${rows.length} trận`;
   const w = document.getElementById('wCombat');
-  if (!rows.length) { w.innerHTML = emptyHTML('Không có kết quả phù hợp'); return; }
+  if (!rows.length) { w.innerHTML = emptyHTML('Không có trận đấu nào. Hãy import danh sách trận từ phần mềm.'); return; }
 
-  w.innerHTML = `<table>
-    <thead><tr>
-      <th style="width:50px">STT</th>
-      <th style="width:90px">Loại trận</th>
-      <th style="width:110px">Hạng cân</th>
-      <th>VĐV Đỏ</th>
-      <th style="width:140px">Đơn vị Đỏ</th>
-      <th>VĐV Xanh</th>
-      <th style="width:140px">Đơn vị Xanh</th>
-      <th style="width:200px">Thắng cuộc</th>
-    </tr></thead>
-    <tbody>${rows.map((r,idx)=>{
-      const isNew = newCombatKeys.has(r._key);
-      const hasRes = !!r.winner_name;
-      const rowBg = isNew ? 'background:#fefce8' : '';
-      return `<tr class="${isNew?'row-new':''}" style="${rowBg}">
-        <td style="text-align:center"><span class="badge badge-stt">${esc(String(r.STT))}</span></td>
-        <td style="text-align:center">
-          <span style="font-size:11px;padding:2px 7px;border-radius:8px;font-weight:600;
-            background:${(r.Loai_Tran||'').toLowerCase()==='chung kết'?'#fef9c3':(r.Loai_Tran||'').toLowerCase()==='bán kết'?'#dbeafe':'#dcfce7'};
-            color:${(r.Loai_Tran||'').toLowerCase()==='chung kết'?'#b45309':(r.Loai_Tran||'').toLowerCase()==='bán kết'?'#1d4ed8':'#15803d'}">
-            ${esc(r.Loai_Tran||'')}
+  // Nhóm theo list_name (nhóm tuổi)
+  const grouped = {};
+  for (const r of rows) {
+    const gk = r.list_name || '(Chưa phân loại)';
+    if (!grouped[gk]) grouped[gk] = [];
+    grouped[gk].push(r);
+  }
+
+  const loaiColor = lt => {
+    const l = (lt||'').toLowerCase();
+    if (l==='chung kết') return {bg:'#fef9c3',color:'#b45309'};
+    if (l==='bán kết')   return {bg:'#dbeafe',color:'#1d4ed8'};
+    return {bg:'#dcfce7',color:'#15803d'};
+  };
+
+  let html = '';
+  for (const [listName, matches] of Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b,'vi'))) {
+    const doneCount = matches.filter(r=>r.winner_name).length;
+    html += `<div class="combat-section">
+      <div class="combat-section-header">
+        <span class="combat-section-title">📂 ${esc(listName)}</span>
+        <span style="font-size:12px;color:#16a34a;background:#dcfce7;padding:2px 8px;border-radius:10px;font-weight:600">✅ ${doneCount}/${matches.length} có KQ</span>
+      </div>
+      <div class="match-grid">`;
+
+    for (const r of matches) {
+      const isNew   = newCombatKeys.has(r._key);
+      const hasRes  = !!r.winner_name;
+      const cardCls = isNew ? 'match-card row-new' : (hasRes ? 'match-card has-result' : 'match-card no-result');
+      const lc      = loaiColor(r.Loai_Tran);
+      const sn      = r._san.replace('san','');
+
+      const redWin  = hasRes && r.winner_team === 'red';
+      const blueWin = hasRes && r.winner_team === 'blue';
+
+      html += `<div class="${cardCls}">
+        <div class="match-header">
+          <span class="match-stt">#${esc(String(r.STT))}</span>
+          <span class="match-type">
+            <span style="font-size:11px;padding:1px 6px;border-radius:6px;font-weight:600;background:${lc.bg};color:${lc.color}">${esc(r.Loai_Tran||'Trận thường')}</span>
           </span>
-        </td>
-        <td style="text-align:center;font-size:12px;color:#475569">${esc(r.Hang_can||'')}</td>
-        <td style="color:#dc2626;font-weight:${hasRes&&r.winner_team==='red'?'700':'400'}">${esc(r.Ten_Do||'—')}</td>
-        <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Do||'')}</td>
-        <td style="color:#2563eb;font-weight:${hasRes&&r.winner_team==='blue'?'700':'400'}">${esc(r.Ten_Xanh||'—')}</td>
-        <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Xanh||'')}</td>
-        <td>${hasRes
-          ? `<span style="color:#16a34a;font-weight:700">🏆 ${esc(r.winner_name)}</span>
-             <span style="font-size:11px;color:#64748b;display:block">${esc(r.winner_unit||'')}</span>
-             ${r.reason?`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:#dbeafe;color:#1d4ed8">${esc(r.reason)}</span>`:''}`
-          : `<span style="color:#94a3b8;font-size:12px">⏳ Chưa có</span>`
-        }</td>
-      </tr>`;
-    }).join('')}</tbody></table>`;
+          <span class="match-hang" style="color:#64748b">${esc(r.Hang_can||'')}</span>
+          <span class="badge-san san-${sn}" style="font-size:10px;padding:1px 6px;border-radius:6px">Sân ${sn}</span>
+        </div>
+        <div class="match-body">
+          <div class="fighter red ${hasRes?(redWin?'winner':'loser'):''}">
+            <div class="fighter-corner">ĐỎ</div>
+            <div class="fighter-name">${esc(r.Ten_Do||'—')}</div>
+            <div class="fighter-unit">${esc(r.Donvi_Do||'')}</div>
+            ${redWin ? '<div class="fighter-crown">🏆</div>' : ''}
+          </div>
+          <div class="vs-divider">VS</div>
+          <div class="fighter blue ${hasRes?(blueWin?'winner':'loser'):''}">
+            <div class="fighter-corner">XANH</div>
+            <div class="fighter-name">${esc(r.Ten_Xanh||'—')}</div>
+            <div class="fighter-unit">${esc(r.Donvi_Xanh||'')}</div>
+            ${blueWin ? '<div class="fighter-crown">🏆</div>' : ''}
+          </div>
+        </div>
+        <div class="match-footer">
+          ${hasRes
+            ? `<span class="match-result-label" style="color:#16a34a;font-weight:700">🏆 ${esc(r.winner_name)}</span>
+               ${r.reason ? `<span class="match-reason-tag">${esc(r.reason)}</span>` : ''}`
+            : `<span class="match-pending">⏳ Chưa có kết quả</span>`
+          }
+        </div>
+      </div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  w.innerHTML = html;
 }
 
 // ════════════════════════════════════════════════
@@ -682,7 +754,7 @@ function rSummary() {
     const xh = r.xephang;
     const rankCls = xh===1?'rank-1':xh===2?'rank-2':xh===3?'rank-3':'';
     const trophy = xh===1?'🥇 ':xh===2?'🥈 ':xh===3?'🥉 ':'';
-    return `<tr>
+    return `<tr class="summary-row-click" onclick="showDonviMedals('${r.donvi.replace(/'/g,"\\'")}')">
       <td class="${rankCls}">${trophy}${r.xephang}</td>
       <td style="font-weight:${xh<=3?700:400};color:#1e293b">${esc(r.donvi)}</td>
       <td class="num-gold">${r.vang||0}</td>
@@ -732,6 +804,92 @@ function esc(s) {
 // ════════════════════════════════════════════════
 // BOOT
 // ════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════
+// POPUP: HUY CHƯƠNG THEO ĐOÀN
+// ════════════════════════════════════════════════
+function showDonviMedals(donvi) {
+  const mOrder = {'Vàng':1,'Bạc':2,'Đồng 1':3,'Đồng 2':4};
+  const mIcon  = {'Vàng':'🥇','Bạc':'🥈','Đồng 1':'🥉','Đồng 2':'🥉'};
+  const mCls   = {'Vàng':'medal-gold','Bạc':'medal-silver','Đồng 1':'medal-bronze','Đồng 2':'medal-bronze'};
+
+  // Gom huy chương Đối kháng
+  const combatMedals = [];
+  const bronzeCount = {};
+  for (const r of combatData) {
+    const key = r.Hang_can || '';
+    const loaiTran = (r.Loai_Tran||'').toLowerCase().trim();
+    if (r.winner_name && loaiTran==='chung kết') {
+      const winner = r.winner_team==='red' ? {ten:r.Ten_Do,donvi:r.Donvi_Do} : {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh};
+      const loser  = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+      if ((winner.donvi||'') === donvi) combatMedals.push({medal:'Vàng', ten:winner.ten||'', noidung:key, loai:'⚔️ Đối kháng'});
+      if ((loser.donvi||'')  === donvi) combatMedals.push({medal:'Bạc',  ten:loser.ten||'',  noidung:key, loai:'⚔️ Đối kháng'});
+    }
+    if (r.winner_name && loaiTran==='bán kết') {
+      const loser = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+      bronzeCount[key] = (bronzeCount[key]||0) + 1;
+      const medalLabel = bronzeCount[key]===1 ? 'Đồng 1' : 'Đồng 2';
+      if ((loser.donvi||'') === donvi) combatMedals.push({medal:medalLabel, ten:loser.ten||'', noidung:key, loai:'⚔️ Đối kháng'});
+    }
+  }
+
+  // Gom huy chương Hội diễn
+  const perfMedalsDonvi = perfMedals
+    .filter(m => (m.Donvi||'') === donvi)
+    .map(m => ({medal: m.manual_medal||m.medal||'', ten: m.Ten||'', noidung: m.Noidung||'', loai:'🎽 Hội diễn'}));
+
+  const all = [...combatMedals, ...perfMedalsDonvi];
+
+  // Đếm
+  const nVang = all.filter(m=>m.medal==='Vàng').length;
+  const nBac  = all.filter(m=>m.medal==='Bạc').length;
+  const nDong = all.filter(m=>m.medal.startsWith('Đồng')).length;
+
+  document.getElementById('popupTitle').textContent = `🏛️ ${donvi}`;
+  document.getElementById('popupGold').textContent   = `🥇 ${nVang} Vàng`;
+  document.getElementById('popupSilver').textContent = `🥈 ${nBac} Bạc`;
+  document.getElementById('popupBronze').textContent = `🥉 ${nDong} Đồng`;
+  document.getElementById('popupTotal').textContent  = `🏅 ${all.length} tổng`;
+
+  // Nhóm theo loại (Đối kháng / Hội diễn)
+  const groups = {};
+  for (const m of all) {
+    if (!groups[m.loai]) groups[m.loai] = [];
+    groups[m.loai].push(m);
+  }
+
+  let html = '';
+  if (!all.length) {
+    html = '<div class="empty"><div class="ico">🔍</div><div>Chưa có huy chương</div></div>';
+  } else {
+    for (const [loai, items] of Object.entries(groups)) {
+      items.sort((a,b)=>(mOrder[a.medal]||9)-(mOrder[b.medal]||9));
+      html += `<div class="popup-group">
+        <div class="popup-group-title">${loai}</div>`;
+      for (const m of items) {
+        html += `<div class="popup-medal-row">
+          <span class="medal ${mCls[m.medal]||'medal-bronze'}">${mIcon[m.medal]||'🏅'} ${esc(m.medal)}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#1e293b">${esc(m.ten||'—')}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:1px">${esc(m.noidung||'—')}</div>
+          </div>
+        </div>`;
+      }
+      html += '</div>';
+    }
+  }
+
+  document.getElementById('popupBody').innerHTML = html;
+  document.getElementById('donviPopup').style.display = 'flex';
+}
+
+function closePopup() {
+  document.getElementById('donviPopup').style.display = 'none';
+}
+
+// Đóng popup bằng phím Escape
+document.addEventListener('keydown', e => { if(e.key==='Escape') closePopup(); });
+
 fetchAll();
 setInterval(fetchAll, POLL);
 </script>
