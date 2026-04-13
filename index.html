@@ -361,19 +361,35 @@ async function fetchAll() {
       const d = await r1.json();
       const flat = [];
       if (d) for (const [sk, td] of Object.entries(d)) {
-        if (td) for (const [, res] of Object.entries(td)) {
-          if (res && res.STT != null) flat.push({...res, _san:sk, _key:`${sk}_${res.list_name||'default'}_${res.STT}`});
+        // pushKey là Firebase push ID — có thể dùng để so sánh thứ tự thời gian (lexicographic)
+        if (td) for (const [pushKey, res] of Object.entries(td)) {
+          if (res && res.STT != null) flat.push({
+            ...res,
+            _san: sk,
+            _pushKey: pushKey,
+            _key: `${sk}_${res.list_name||'default'}_${res.STT}`
+          });
         }
       }
       flat.sort((a,b)=> {
         const s = +a._san.replace('san','') - +b._san.replace('san','');
         return s||Number(a.STT)-Number(b.STT);
       });
-      const nk = new Set(flat.map(r=>r._key));
-      const newCombat = prevC.size>0 ? flat.filter(r=>!prevC.has(r._key)) : [];
+      // Dedup toàn bộ flat theo STT+list_name: giữ bản ghi MỚI NHẤT (pushKey lớn hơn = ghi sau)
+      const dedupFlat = {};
+      for (const r of flat) {
+        const dk = `${r.list_name||'default'}__${r.STT}`;
+        const ex = dedupFlat[dk];
+        if (!ex) { dedupFlat[dk] = r; continue; }
+        // Firebase push key là chuỗi sortable theo thời gian — lớn hơn = mới hơn
+        if (r._pushKey > ex._pushKey) dedupFlat[dk] = r;
+      }
+      const dedupedFlat = Object.values(dedupFlat);
+      const nk = new Set(dedupedFlat.map(r=>r._key));
+      const newCombat = prevC.size>0 ? dedupedFlat.filter(r=>!prevC.has(r._key)) : [];
       newCombatKeys = new Set(newCombat.map(r=>r._key));
       if (prevC.size>0) newCombat.forEach(r=>toast(r,'combat'));
-      prevC = nk; combatData = flat;
+      prevC = nk; combatData = dedupedFlat;
       // Cập nhật dropdown danh sách
       const lists = [...new Set(flat.map(r=>r.list_name||'(Chưa phân loại)'))].sort();
       const sel = document.getElementById('listFilter');
@@ -381,39 +397,52 @@ async function fetchAll() {
       sel.innerHTML = '<option value="all">Tất cả</option>' +
         lists.map(l=>`<option value="${l}" ${l===curVal?'selected':''}>${l}</option>`).join('');
       rCombat(); rCombatMedal();
+      rSummary(); // Cập nhật Tổng sắp khi có KQ đối kháng mới
     }
 
-    // 2) performance (hội diễn medals)
+    // 2) performance (hội diễn)
     const r2 = await fetchWithTimeout(`${FB}/performance.json`);
     if (r2.ok) {
       const d = await r2.json();
-      // Thu thập TẤT CẢ VĐV hội diễn (dùng cho tab Kết quả)
+      // Thu thập TẤT CẢ VĐV hội diễn từ mọi sân (kể cả chưa có điểm)
+      // Mỗi group trên Firebase có: { san, group_index, ts, performers: [...] }
+      // Dedup theo Ten+Donvi+Noidung: giữ bản ghi có ts MỚI NHẤT (giống logic combat)
+      const groupMap = {}; // key = "Ten|Donvi|Noidung" → group record có ts lớn nhất
       const allPerf = [];
       const medals  = [];
+
       if (d) for (const [sk, groups] of Object.entries(d)) {
-        if (groups) for (const [, grp] of Object.entries(groups)) {
-          if (grp && grp.performers) for (const p of grp.performers) {
-            allPerf.push({...p, _san:sk});
-            const medal = p.manual_medal || p.medal || '';
-            if (medal) medals.push({...p, _san:sk, _key:`${sk}_${p.Ten}_${p.Noidung}`});
+        if (groups) for (const [gk, grp] of Object.entries(groups)) {
+          if (!grp || !grp.performers) continue;
+          // Mỗi performer trong group dùng chung ts của group
+          const grpTs = grp.ts || 0;
+          for (const p of grp.performers) {
+            allPerf.push({...p, _san:sk, _grpTs:grpTs});
           }
         }
       }
-      // Dedup allPerf theo Ten+Donvi+Noidung+STT (ưu tiên manual_medal, rồi sân số nhỏ)
+
+      // Dedup: cùng Ten+Donvi+Noidung → giữ bản ts mới nhất
       const dedupAll = {};
       for (const p of allPerf) {
-        const dk = `${p.Ten||''}|${p.Donvi||''}|${p.Noidung||''}|${p.STT||''}`;
+        const dk = `${p.Ten||''}|${p.Donvi||''}|${p.Noidung||''}`;
         const ex = dedupAll[dk];
         if (!ex) { dedupAll[dk] = p; continue; }
-        const hasM = !!(p.manual_medal), exM = !!(ex.manual_medal);
-        if (hasM && !exM) { dedupAll[dk] = p; continue; }
-        if (!hasM && exM) continue;
-        // ưu tiên sân số nhỏ hơn (sân thi thật thường là sân nhỏ nhất có dữ liệu)
-        const sn = +p._san.replace('san',''), se = +ex._san.replace('san','');
-        if (sn < se) { dedupAll[dk] = p; }
+        // Ưu tiên ts mới hơn
+        if ((p._grpTs||0) > (ex._grpTs||0)) { dedupAll[dk] = p; continue; }
+        // Bằng ts → ưu tiên bản có điểm
+        if (typeof p.total_score === 'number' && typeof ex.total_score !== 'number') { dedupAll[dk] = p; }
       }
       perfAllData = Object.values(dedupAll);
+      // Sắp xếp theo Noidung rồi STT
+      perfAllData.sort((a,b) => {
+        const nd = (a.Noidung||'').localeCompare(b.Noidung||'','vi');
+        if (nd) return nd;
+        return (Number(a.STT)||0) - (Number(b.STT)||0);
+      });
       rPerfResult();
+      rPerfMedal();   // Cập nhật tab Huy chương Hội diễn
+      rSummary();     // Cập nhật Tổng sắp ngay từ performance data
 
       // Dedup medals theo Ten+Donvi+Noidung (ưu tiên manual_medal, rồi sân số nhỏ)
       const dedupMedals = {};
@@ -452,56 +481,74 @@ async function fetchAll() {
 function rCombat() {
   const q = document.getElementById('qC').value.toLowerCase().trim();
   const fCList = document.getElementById('listFilter').value;
-  const rows = combatData.filter(r => {
-    if (fC!=='all' && r._san!==fC) return false;
-    if (fCList!=='all' && (r.list_name||'(Chưa phân loại)')!==fCList) return false;
-    if (q && ![r.Ten_Do,r.Donvi_Do,r.Ten_Xanh,r.Donvi_Xanh,r.winner_name,r.Loai_Tran,r.Hang_can].join(' ').toLowerCase().includes(q)) return false;
+
+  // combatData đã được dedup tại fetchAll (mỗi STT chỉ giữ bản ghi MỚI NHẤT)
+  // Ở đây chỉ lọc theo sân / danh sách / search rồi hiển thị thẳng theo STT tăng dần
+  let rows = combatData.filter(r => {
+    if (fC !== 'all' && r._san !== fC) return false;
+    if (fCList !== 'all' && (r.list_name || '(Chưa phân loại)') !== fCList) return false;
+    if (q && ![r.Ten_Do,r.Donvi_Do,r.Ten_Xanh,r.Donvi_Xanh,r.winner_name,r.Loai_Tran,r.Hang_can,r.Nhomtuoi].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
-  document.getElementById('cDone').textContent  = `✅ ${rows.filter(r=>r.winner_name).length} có KQ`;
+  rows.sort((a, b) => Number(a.STT) - Number(b.STT));
+
+  const done = rows.filter(r => r.winner_name).length;
+  document.getElementById('cDone').textContent  = `✅ ${done} có KQ`;
   document.getElementById('cTotal').textContent = `📊 ${rows.length} trận`;
+
   const w = document.getElementById('wCombat');
   if (!rows.length) { w.innerHTML = emptyHTML('Không có kết quả phù hợp'); return; }
 
-  w.innerHTML = `<table>
-    <thead><tr>
-      <th style="width:50px">STT</th>
-      <th style="width:90px">Loại trận</th>
-      <th style="width:110px">Hạng cân</th>
-      <th>VĐV Đỏ</th>
-      <th style="width:140px">Đơn vị Đỏ</th>
-      <th>VĐV Xanh</th>
-      <th style="width:140px">Đơn vị Xanh</th>
-      <th style="width:200px">Thắng cuộc</th>
-    </tr></thead>
-    <tbody>${rows.map((r,idx)=>{
-      const isNew = newCombatKeys.has(r._key);
-      const hasRes = !!r.winner_name;
-      const rowBg = isNew ? 'background:#fefce8' : '';
-      return `<tr class="${isNew?'row-new':''}" style="${rowBg}">
-        <td style="text-align:center"><span class="badge badge-stt">${esc(String(r.STT))}</span></td>
-        <td style="text-align:center">
-          <span style="font-size:11px;padding:2px 7px;border-radius:8px;font-weight:600;
-            background:${(r.Loai_Tran||'').toLowerCase()==='chung kết'?'#fef9c3':(r.Loai_Tran||'').toLowerCase()==='bán kết'?'#dbeafe':'#dcfce7'};
-            color:${(r.Loai_Tran||'').toLowerCase()==='chung kết'?'#b45309':(r.Loai_Tran||'').toLowerCase()==='bán kết'?'#1d4ed8':'#15803d'}">
-            ${esc(r.Loai_Tran||'')}
-          </span>
-        </td>
-        <td style="text-align:center;font-size:12px;color:#475569">${esc(r.Hang_can||'')}</td>
-        <td style="color:#dc2626;font-weight:${hasRes&&r.winner_team==='red'?'700':'400'}">${esc(r.Ten_Do||'—')}</td>
-        <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Do||'')}</td>
-        <td style="color:#2563eb;font-weight:${hasRes&&r.winner_team==='blue'?'700':'400'}">${esc(r.Ten_Xanh||'—')}</td>
-        <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Xanh||'')}</td>
-        <td>${hasRes
-          ? `<span style="color:#16a34a;font-weight:700">🏆 ${esc(r.winner_name)}</span>
-             <span style="font-size:11px;color:#64748b;display:block">${esc(r.winner_unit||'')}</span>
-             ${r.reason?`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:#dbeafe;color:#1d4ed8">${esc(r.reason)}</span>`:''}`
-          : `<span style="color:#94a3b8;font-size:12px">⏳ Chưa có</span>`
-        }</td>
-      </tr>`;
-    }).join('')}</tbody></table>`;
-}
+  const loaiStyle = lt => {
+    const l = (lt||'').toLowerCase();
+    if (l === 'chung kết') return 'background:#fef9c3;color:#b45309';
+    if (l === 'bán kết')   return 'background:#dbeafe;color:#1d4ed8';
+    if (l === 'tứ kết')    return 'background:#dcfce7;color:#15803d';
+    if (l === 'vòng loại') return 'background:#dcfce7;color:#15803d';
+    return 'background:#e2e8f0;color:#475569';
+  };
 
+  w.innerHTML = `<div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:50px">STT</th>
+        <th style="width:90px">Loại trận</th>
+        <th style="width:150px">Hạng cân / Nhóm</th>
+        <th>VĐV Đỏ</th>
+        <th style="width:130px">Đơn vị Đỏ</th>
+        <th>VĐV Xanh</th>
+        <th style="width:130px">Đơn vị Xanh</th>
+        <th style="width:200px">Thắng cuộc</th>
+      </tr></thead>
+      <tbody>${rows.map(r => {
+        const isNew  = newCombatKeys.has(r._key);
+        const hasRes = !!r.winner_name;
+        const rowBg  = isNew ? '#fefce8' : !hasRes ? '#fafbfc' : '#fff';
+        return `<tr class="${isNew?'row-new':''}" style="background:${rowBg}">
+          <td style="text-align:center"><span class="badge badge-stt">${esc(String(r.STT))}</span></td>
+          <td style="text-align:center">
+            <span style="font-size:11px;padding:2px 7px;border-radius:8px;font-weight:600;${loaiStyle(r.Loai_Tran)}">${esc(r.Loai_Tran||'')}</span>
+          </td>
+          <td style="font-size:12px;color:#475569">${esc(r.Hang_can||'')}${r.Nhomtuoi&&r.Nhomtuoi!==r.Hang_can?`<br><span style="color:#94a3b8">${esc(r.Nhomtuoi)}</span>`:''}</td>
+          <td style="color:#dc2626;font-weight:${hasRes&&r.winner_team==='red'?700:400}">
+            ${esc(r.Ten_Do||'—')}${hasRes&&r.winner_team==='red'?' 🏆':''}
+          </td>
+          <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Do||'')}</td>
+          <td style="color:#2563eb;font-weight:${hasRes&&r.winner_team==='blue'?700:400}">
+            ${esc(r.Ten_Xanh||'—')}${hasRes&&r.winner_team==='blue'?' 🏆':''}
+          </td>
+          <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Xanh||'')}</td>
+          <td>${hasRes
+            ? `<span style="color:#16a34a;font-weight:700">🏆 ${esc(r.winner_name)}</span>
+               <span style="font-size:11px;color:#64748b;display:block">${esc(r.winner_unit||'')}</span>
+               ${r.reason?`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:#dbeafe;color:#1d4ed8">${esc(r.reason)}</span>`:''}`
+            : `<span style="color:#94a3b8;font-size:12px">⏳ Chưa thi đấu</span>`
+          }</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+  </div>`;
+}
 // ════════════════════════════════════════════════
 // RENDER: HUY CHƯƠNG ĐỐI KHÁNG
 // ════════════════════════════════════════════════
@@ -589,7 +636,8 @@ function rCombatMedal() {
 
 
 // ════════════════════════════════════════════════
-// RENDER: KẾT QUẢ HỘI DIỄN (tất cả VĐV, nhóm theo Nội dung, sắp xếp theo điểm)
+// RENDER: KẾT QUẢ HỘI DIỄN
+// Hiển thị TOÀN BỘ danh sách (kể cả chưa thi đấu), nhóm theo Nội dung
 // ════════════════════════════════════════════════
 function rPerfResult() {
   const q = document.getElementById('qPR').value.toLowerCase().trim();
@@ -597,69 +645,92 @@ function rPerfResult() {
   const mIcon  = {'Vàng':'🥇','Bạc':'🥈','Đồng 1':'🥉','Đồng 2':'🥉'};
   const mCls   = {'Vàng':'medal-gold','Bạc':'medal-silver','Đồng 1':'medal-bronze','Đồng 2':'medal-bronze'};
 
-  // Hội diễn: không filter theo _san vì sau dedup _san chỉ là sân đại diện
   const rows = perfAllData.filter(p => {
     if (q && ![p.Ten,p.Donvi,p.Noidung,p.Nhomtuoi].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
 
-  document.getElementById('prCount').textContent   = `🎽 ${rows.length} VĐV`;
+  const totalWithScore = rows.filter(p => typeof p.total_score === 'number').length;
+  document.getElementById('prCount').textContent   = `🎽 ${rows.length} VĐV (✅ ${totalWithScore} có điểm)`;
   document.getElementById('prNoidung').textContent = `📂 ${new Set(rows.map(r=>r.Noidung||'')).size} nội dung`;
 
   const w = document.getElementById('wPerfResult');
-  if (!rows.length) { w.innerHTML = emptyHTML('Chưa có kết quả Hội diễn'); return; }
+  if (!rows.length) { w.innerHTML = emptyHTML('Chưa có danh sách Hội diễn — bấm "🎽 Đồng bộ danh sách Hội diễn lên Web" trong PY'); return; }
 
-  // Nhóm theo Nội dung, sắp theo điểm giảm dần trong mỗi nhóm
+  // Nhóm theo Nội dung
   const grouped = {};
   for (const p of rows) {
     const gk = p.Noidung || '—';
     if (!grouped[gk]) grouped[gk] = [];
     grouped[gk].push(p);
   }
+
+  // Trong mỗi nhóm: luôn giữ nguyên thứ tự STT gốc (thứ tự thi đấu)
   for (const g of Object.values(grouped)) {
-    g.sort((a, b) => {
-      // Ưu tiên xếp theo manual_rank nếu có
-      const ra = parseInt(a.manual_rank||a.rank||'') || 9999;
-      const rb = parseInt(b.manual_rank||b.rank||'') || 9999;
-      if (ra !== rb) return ra - rb;
-      // Nếu bằng nhau thì xếp theo điểm giảm dần
-      return (b.total_score||0) - (a.total_score||0);
-    });
+    g.sort((a,b) => (Number(a.STT)||0) - (Number(b.STT)||0));
   }
 
-  let tbody = '';
-  let stt = 0;
+  const TH = `background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;padding:8px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px`;
+
+  let html = '';
   for (const [noidung, items] of Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b,'vi'))) {
-    tbody += `<tr class="group-header"><td colspan="7">📂 ${esc(noidung)}</td></tr>`;
-    for (const p of items) {
-      stt++;
-      const medal  = p.manual_medal || p.medal || '';
-      const rank   = p.manual_rank  || p.rank  || '';
-      const score  = typeof p.total_score === 'number' ? p.total_score.toFixed(2) : '—';
-      const sn     = (p._san||'').replace('san','');
-      const scores = Array.isArray(p.scores) ? p.scores : [];
-      const scoresStr = scores.length
-        ? `<span style="color:#94a3b8;font-size:11px">[${scores.map(s=>typeof s==='number'?s.toFixed(2):s).join(', ')}]</span>`
-        : '';
-      tbody += `<tr>
-        <td style="color:#64748b;font-size:12px">${stt}</td>
-        <td><span class="badge-san san-${sn}">Sân ${sn}</span></td>
-        <td style="font-weight:600">${esc(p.Ten||'—')}</td>
-        <td style="color:#475569">${esc(p.Donvi||'—')}</td>
-        <td style="color:#64748b;font-size:12px">${esc(p.Nhomtuoi||'')}</td>
-        <td>
-          ${rank ? `<span class="rank-tag">Hạng ${esc(String(rank))}</span>` : ''}
-          <span style="color:#2563eb;font-weight:700;margin-left:4px">${score}</span>
-          <div style="margin-top:3px">${scoresStr}</div>
-        </td>
-        <td>${medal ? `<span class="medal ${mCls[medal]||'medal-bronze'}">${mIcon[medal]||'🏅'} ${esc(medal)}</span>` : '<span style="color:#94a3b8;font-size:12px">—</span>'}</td>
-      </tr>`;
-    }
-  }
+    const doneCount = items.filter(p => typeof p.total_score === 'number').length;
+    const allDone   = doneCount === items.length;
+    html += `<div class="combat-section">
+      <div class="combat-section-header">
+        <span class="combat-section-title">📂 ${esc(noidung)}</span>
+        <span class="combat-section-count">${allDone ? '✅' : '⏳'} ${doneCount} / ${items.length} đã chấm điểm</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:0 0 10px 10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:0">
+        <thead><tr>
+          <th style="${TH};width:40px">STT</th>
+          <th style="${TH}">VĐV / Đội</th>
+          <th style="${TH};width:150px">Đơn vị</th>
+          <th style="${TH};width:90px">Nhóm tuổi</th>
+          <th style="${TH};width:220px">Điểm giám định</th>
+          <th style="${TH};width:100px">Tổng điểm</th>
+          <th style="${TH};width:120px">Hạng / HC</th>
+        </tr></thead>
+        <tbody>${items.map((p, idx) => {
+          const hasScore = typeof p.total_score === 'number';
+          const medal    = p.manual_medal || p.medal || '';
+          const rank     = p.manual_rank  || p.rank  || '';
+          const scores   = Array.isArray(p.scores) ? p.scores : [];
+          const ignoreIdx = Array.isArray(p.ignore_indices) ? new Set(p.ignore_indices) : new Set();
+          const rowBg    = hasScore ? '#fff' : '#fafbfc';
 
-  w.innerHTML = `<table>
-    <thead><tr><th>#</th><th>Sân</th><th>VĐV / Đội</th><th>Đơn vị</th><th>Nhóm tuổi</th><th>Hạng / Điểm</th><th>Huy chương</th></tr></thead>
-    <tbody>${tbody}</tbody></table>`;
+          // Hiển thị từng điểm GĐ, in đậm điểm được tính (không bị loại)
+          const scoresHtml = scores.length
+            ? scores.map((s, i) => {
+                const val = typeof s === 'number' ? s.toFixed(2) : s;
+                const isIgnored = ignoreIdx.has(i);
+                return `<span style="font-size:12px;padding:1px 5px;border-radius:4px;margin:1px;display:inline-block;
+                  background:${isIgnored ? '#f1f5f9' : '#fef9c3'};
+                  color:${isIgnored ? '#94a3b8' : '#b45309'};
+                  text-decoration:${isIgnored ? 'line-through' : 'none'};
+                  font-weight:${isIgnored ? 400 : 700}">${val}</span>`;
+              }).join('')
+            : `<span style="color:#94a3b8;font-size:12px">⏳ Chưa chấm điểm</span>`;
+
+          return `<tr style="background:${rowBg};border-bottom:1px solid #f1f5f9">
+            <td style="padding:9px 12px;text-align:center;color:#64748b;font-size:12px">${idx+1}</td>
+            <td style="padding:9px 12px;font-weight:600;color:#1e293b">${esc(p.Ten||'—')}</td>
+            <td style="padding:9px 12px;font-size:12px;color:#475569">${esc(p.Donvi||'—')}</td>
+            <td style="padding:9px 12px;font-size:12px;color:#64748b">${esc(p.Nhomtuoi||'')}</td>
+            <td style="padding:9px 12px">${scoresHtml}</td>
+            <td style="padding:9px 12px;font-size:18px;font-weight:800;color:${hasScore?'#2563eb':'#94a3b8'}">
+              ${hasScore ? p.total_score.toFixed(2) : '—'}
+            </td>
+            <td style="padding:9px 12px">
+              ${rank  ? `<span class="rank-tag" style="margin-bottom:3px;display:inline-block">Hạng ${esc(String(rank))}</span><br>` : ''}
+              ${medal ? `<span class="medal ${mCls[medal]||'medal-bronze'}">${mIcon[medal]||'🏅'} ${esc(medal)}</span>` : (!hasScore ? '' : '<span style="color:#94a3b8;font-size:12px">—</span>')}
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+  w.innerHTML = html;
 }
 
 // ════════════════════════════════════════════════
@@ -670,9 +741,11 @@ function rPerfMedal() {
   const q = document.getElementById('qPM').value.toLowerCase().trim();
   const mOrder = {'Vàng':1,'Bạc':2,'Đồng 1':3,'Đồng 2':4};
 
-  // Hội diễn: không filter theo _san vì sau dedup _san chỉ là sân đại diện
-  let rows = perfMedals.filter(m => {
-    if (q && ![m.Ten,m.Donvi,m.Noidung,m.Nhomtuoi].join(' ').toLowerCase().includes(q)) return false;
+  // Lấy từ perfAllData — chỉ lấy những VĐV đã có huy chương
+  let rows = perfAllData.filter(m => {
+    const medal = m.manual_medal || m.medal || '';
+    if (!medal) return false;
+    if (q && ![m.Ten,m.Donvi,m.Noidung,m.Nhomtuoi,medal].join(' ').toLowerCase().includes(q)) return false;
     return true;
   });
 
@@ -705,7 +778,7 @@ function rPerfMedal() {
     tbody += `<tr class="group-header"><td colspan="6">📂 ${esc(g.noidung||'Nội dung')}</td></tr>`;
     for (const m of g.items) {
       const medal = m.manual_medal||m.medal||'';
-      const sn    = m._san.replace('san','');
+      const sn    = (m._san||'san1').replace('san','');
       const rank  = m.manual_rank||m.rank||'';
       tbody += `<tr>
         <td><span class="badge-san san-${sn}">Sân ${sn}</span></td>
@@ -726,9 +799,77 @@ function rPerfMedal() {
 // ════════════════════════════════════════════════
 // RENDER: TỔNG SẮP
 // ════════════════════════════════════════════════
+function buildSummaryFromData() {
+  // Tính tổng sắp trực tiếp từ dữ liệu combat + performance
+  const medalCount = {}; // donvi -> {vang, bac, dong}
+  const ensure = (d) => { if (!medalCount[d]) medalCount[d] = {vang:0, bac:0, dong:0}; };
+
+  // --- Đối kháng ---
+  const bronzeCount = {};
+  const _dedup = {};
+  for (const r of combatData) {
+    if (!r.winner_name) continue;
+    const dk = `${r.Hang_can||''}|${(r.Loai_Tran||'').toLowerCase()}|${r.Ten_Do||''}|${r.Ten_Xanh||''}`;
+    const ex = _dedup[dk];
+    if (!ex) { _dedup[dk] = r; continue; }
+    const sn = +r._san.replace('san',''), se = +ex._san.replace('san','');
+    if (sn < se) _dedup[dk] = r;
+  }
+  for (const r of Object.values(_dedup)) {
+    const key = r.Hang_can || '';
+    const loai = (r.Loai_Tran||'').toLowerCase().trim();
+    if (loai === 'chung kết') {
+      const winner = r.winner_team==='red' ? r.Donvi_Do : r.Donvi_Xanh;
+      const loser  = r.winner_team==='red' ? r.Donvi_Xanh : r.Donvi_Do;
+      if (winner) { ensure(winner); medalCount[winner].vang++; }
+      if (loser)  { ensure(loser);  medalCount[loser].bac++; }
+    }
+    if (loai === 'bán kết') {
+      const loser = r.winner_team==='red' ? r.Donvi_Xanh : r.Donvi_Do;
+      bronzeCount[key] = (bronzeCount[key]||0) + 1;
+      if (loser) { ensure(loser); medalCount[loser].dong++; }
+    }
+  }
+
+  // --- Hội diễn ---
+  for (const p of perfAllData) {
+    const medal = p.manual_medal || p.medal || '';
+    const donvi = p.Donvi || '';
+    if (!medal || !donvi) continue;
+    ensure(donvi);
+    if (medal === 'Vàng') medalCount[donvi].vang++;
+    else if (medal === 'Bạc') medalCount[donvi].bac++;
+    else if (medal.startsWith('Đồng')) medalCount[donvi].dong++;
+  }
+
+  // Chuyển thành mảng và xếp hạng
+  const rows = Object.entries(medalCount)
+    .filter(([, c]) => c.vang+c.bac+c.dong > 0)
+    .map(([donvi, c]) => ({ donvi, vang:c.vang, bac:c.bac, dong:c.dong }));
+
+  rows.sort((a, b) => {
+    if (b.vang !== a.vang) return b.vang - a.vang;
+    if (b.bac  !== a.bac)  return b.bac  - a.bac;
+    if (b.dong !== a.dong) return b.dong - a.dong;
+    return a.donvi.localeCompare(b.donvi, 'vi');
+  });
+
+  let rank = 1;
+  return rows.map((r, i) => {
+    if (i > 0) {
+      const prev = rows[i-1];
+      if (r.vang !== prev.vang || r.bac !== prev.bac || r.dong !== prev.dong) rank = i+1;
+    }
+    return { ...r, xephang: rank };
+  });
+}
+
 function rSummary() {
   const q = document.getElementById('qS').value.toLowerCase().trim();
-  const rows = summaryRows.filter(r => !q || r.donvi.toLowerCase().includes(q));
+
+  // Ưu tiên summaryRows từ Python; nếu rỗng thì tự tính từ dữ liệu hiện có
+  const sourceRows = summaryRows.length > 0 ? summaryRows : buildSummaryFromData();
+  const rows = sourceRows.filter(r => !q || (r.donvi||'').toLowerCase().includes(q));
 
   document.getElementById('sTotal').textContent = `🏛️ ${rows.length} đơn vị`;
   const w = document.getElementById('wSummary');
@@ -826,9 +967,9 @@ function showDonviMedals(donvi) {
     }
   }
 
-  // Gom huy chương Hội diễn
-  const perfMedalsDonvi = perfMedals
-    .filter(m => (m.Donvi||'') === donvi)
+  // Gom huy chương Hội diễn — đọc từ perfAllData (luôn được cập nhật)
+  const perfMedalsDonvi = perfAllData
+    .filter(m => (m.Donvi||'') === donvi && !!(m.manual_medal||m.medal||''))
     .map(m => ({medal: m.manual_medal||m.medal||'', ten: m.Ten||'', noidung: m.Noidung||'', loai:'🎽 Hội diễn'}));
 
   const all = [...combatMedals, ...perfMedalsDonvi];
