@@ -150,6 +150,95 @@
     .match-reason-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #dbeafe; color: #1d4ed8; }
     .match-pending { font-size: 11px; color: #92400e; background: #fef3c7; padding: 2px 8px; border-radius: 10px; border: 1px solid #fde68a; }
 
+    /* ── SIGMA BRACKET ── */
+    .sigma-wrap { display:flex; flex-direction:column; gap:28px; }
+
+    .sigma-weight-block{
+      background:#fff;
+      border-radius:12px;
+      overflow:visible;
+      box-shadow:0 2px 10px rgba(0,0,0,.08);
+      border:1px solid #e2e8f0;
+    }
+
+    .sigma-weight-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 18px;
+      background:linear-gradient(135deg,#1d4ed8,#2563eb);
+      color:#fff;
+    }
+
+    .sigma-weight-title{font-size:14px;font-weight:700;letter-spacing:.4px}
+    .sigma-weight-meta{font-size:12px;opacity:.85}
+
+    /* QUAN TRỌNG: cho phép cả ngang + dọc */
+    .sigma-bracket-area{
+      overflow:auto;
+      padding:20px 16px 32px;
+      min-height:420px;
+      max-height:none;
+    }
+
+    /* để svg không bị co méo */
+    .sigma-bracket-area svg{
+      display:block;
+      min-width:max-content;
+    }
+
+    /* bracket tree */
+    .bracket-tree { display: flex; flex-direction: row; gap: 0; align-items: stretch; min-width: max-content; }
+    .bracket-col { display: flex; flex-direction: column; justify-content: space-around; margin-right: 0; position: relative; }
+    .bracket-col + .bracket-col { margin-left: 50px; }
+
+    .b-node-wrap { display: flex; align-items: center; position: relative; }
+    .b-node {
+      width: 200px; min-height: 54px; border-radius: 8px; padding: 8px 12px;
+      display: flex; flex-direction: column; justify-content: center;
+      position: relative; box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      transition: box-shadow .2s, transform .15s;
+      cursor: default; font-size: 13px;
+    }
+    .b-node:hover { box-shadow: 0 4px 14px rgba(0,0,0,.18); transform: translateY(-1px); }
+
+    .b-node.fighter-red  { background: #fee2e2; border: 2px solid #f87171; }
+    .b-node.fighter-blue { background: #dbeafe; border: 2px solid #60a5fa; }
+    .b-node.match-node   { background: #f0fdf4; border: 2px solid #4ade80; width: 180px; }
+    .b-node.match-node.final { background: #fef9c3; border: 2px solid #f59e0b; }
+    .b-node.match-node.resolved { background: #dcfce7; border: 2px solid #22c55e; }
+
+    .b-node-corner { font-size: 9px; font-weight: 700; letter-spacing: .6px; margin-bottom: 2px; opacity: .75; }
+    .b-node-corner.red  { color: #dc2626; }
+    .b-node-corner.blue { color: #1d4ed8; }
+    .b-node-name { font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 176px; }
+    .b-node-name.loser-name { text-decoration: line-through; color: #94a3b8; font-weight: 400; }
+    .b-node-unit { font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 176px; }
+    .b-node-crown { font-size: 12px; margin-left: 4px; }
+
+    .b-node-match-label { font-size: 11px; color: #64748b; margin-bottom: 3px; font-weight: 600; }
+    .b-node-match-winner { font-size: 13px; font-weight: 700; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .b-node-match-unit   { font-size: 11px; color: #64748b; }
+    .b-node-match-pending { font-size: 12px; color: #92400e; }
+
+    /* connector lines via SVG overlay – we use CSS border trick instead */
+    .b-connector-right {
+      position: absolute; right: -50px; top: 50%; width: 50px; height: 0;
+      border-top: 2px dashed #cbd5e1; pointer-events: none;
+    }
+    .b-connector-right.resolved { border-top-color: #22c55e; border-top-style: solid; }
+
+    .sigma-empty { text-align: center; padding: 30px; color: #94a3b8; font-size: 13px; }
+
+    /* round labels */
+    .sigma-round-labels { display: flex; gap: 0; margin-bottom: 10px; min-width: max-content; }
+    .sigma-round-label {
+      width: 200px; text-align: center; font-size: 11px; font-weight: 700;
+      color: #1d4ed8; text-transform: uppercase; letter-spacing: .5px; padding: 4px 0;
+      background: #eff6ff; border-radius: 6px; margin-right: 50px;
+    }
+    .sigma-round-label:last-child { margin-right: 0; }
+
     /* toast */
     .toast-box{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999}
     .toast{background:#fff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 15px;font-size:13px;color:#1e293b;max-width:310px;animation:tin .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.12)}
@@ -190,6 +279,7 @@
 <!-- MAIN TABS -->
 <div class="main-tabs">
   <div class="main-tab active"  onclick="switchTab('combat',this)">⚔️ Đối kháng</div>
+  <div class="main-tab"         onclick="switchTab('sigma',this)">🏆 Sigma Đối kháng</div>
   <div class="main-tab"         onclick="switchTab('combat-medal',this)">🥊 Huy chương Đối kháng</div>
   <div class="main-tab"         onclick="switchTab('perf-result',this)">🎽 Kết quả Hội diễn</div>
   <div class="main-tab"         onclick="switchTab('perf-medal',this)">🏅 Huy chương Hội diễn</div>
@@ -221,6 +311,34 @@
     </div>
   </div>
   <div class="tbl-wrap" id="wCombat"><div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div></div>
+</div>
+
+<!-- ══════════════════ TAB SIGMA ĐỐI KHÁNG ══════════════════ -->
+<div id="tab-sigma" class="tab-content">
+  <div class="controls">
+    <div class="san-tabs" id="sanSigma">
+      <button class="san-btn active" onclick="fSan('sigma','all',this)">🏟️ Tất cả sân</button>
+      <button class="san-btn" onclick="fSan('sigma','san1',this)">Sân 1</button>
+      <button class="san-btn" onclick="fSan('sigma','san2',this)">Sân 2</button>
+      <button class="san-btn" onclick="fSan('sigma','san3',this)">Sân 3</button>
+      <button class="san-btn" onclick="fSan('sigma','san4',this)">Sân 4</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <span style="font-size:12px;color:#475569;white-space:nowrap">🏋️ Hạng cân:</span>
+      <select id="sigmaWeightFilter" onchange="rSigma()"
+        style="background:#fff;border:1px solid #cbd5e1;border-radius:16px;color:#1e293b;
+               font-size:12px;padding:4px 10px;outline:none;cursor:pointer;min-width:130px">
+        <option value="all">Tất cả</option>
+      </select>
+    </div>
+    <div class="stats-row">
+      <div class="chip chip-g" id="sigmaTotal">📊 0 hạng cân</div>
+      <div class="chip chip-b" id="sigmaDone">✅ 0 có KQ</div>
+    </div>
+  </div>
+  <div id="wSigma" style="padding:16px 24px">
+    <div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div>
+  </div>
 </div>
 
 <!-- ══════════════════ TAB 2: HUY CHƯƠNG ĐỐI KHÁNG ══════════════════ -->
@@ -311,7 +429,7 @@ let combatData   = [];   // tất cả trận
 let perfMedals   = [];   // huy chương hội diễn
 let summaryRows  = [];   // tổng sắp
 
-let fC  = 'all', fCM = 'all', fPM = 'all', fPR = 'all';
+let fC  = 'all', fCM = 'all', fPM = 'all', fPR = 'all', fSigma = 'all';
 let fCList = 'all';  // filter theo danh sách đối kháng
 let prevC = new Set(), prevPM = new Set();
 let newCombatKeys = new Set();
@@ -328,10 +446,11 @@ function switchTab(name, el) {
 }
 
 function fSan(tab, san, btn) {
-  if (tab==='c')       { fC  = san; rCombat(); }
-  else if (tab==='cm') { fCM = san; rCombatMedal(); }
-  else if (tab==='pr') { fPR = san; rPerfResult(); }
-  else                 { fPM = san; rPerfMedal(); }
+  if (tab==='c')           { fC  = san; rCombat(); }
+  else if (tab==='cm')     { fCM = san; rCombatMedal(); }
+  else if (tab==='pr')     { fPR = san; rPerfResult(); }
+  else if (tab==='sigma')  { fSigma = san; rSigma(); }
+  else                     { fPM = san; rPerfMedal(); }
   btn.closest('.san-tabs').querySelectorAll('.san-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
@@ -396,7 +515,7 @@ async function fetchAll() {
       const curVal = sel.value;
       sel.innerHTML = '<option value="all">Tất cả</option>' +
         lists.map(l=>`<option value="${l}" ${l===curVal?'selected':''}>${l}</option>`).join('');
-      rCombat(); rCombatMedal();
+      rCombat(); rCombatMedal(); rSigma();
       rSummary(); // Cập nhật Tổng sắp khi có KQ đối kháng mới
     }
 
@@ -422,15 +541,20 @@ async function fetchAll() {
         }
       }
 
-      // Dedup: cùng Ten+Donvi+Noidung → giữ bản ts mới nhất
+      // Dedup: cùng Ten+Donvi+Noidung → giữ bản ts mới nhất, ưu tiên bản có manual_medal
       const dedupAll = {};
       for (const p of allPerf) {
         const dk = `${p.Ten||''}|${p.Donvi||''}|${p.Noidung||''}`;
         const ex = dedupAll[dk];
         if (!ex) { dedupAll[dk] = p; continue; }
-        // Ưu tiên ts mới hơn
+        const hasManual = !!(p.manual_medal || p.manual_rank);
+        const exManual  = !!(ex.manual_medal || ex.manual_rank);
+        // Ưu tiên 1: bản có manual_medal/manual_rank thắng bản không có
+        if (hasManual && !exManual) { dedupAll[dk] = p; continue; }
+        if (!hasManual && exManual) continue;
+        // Ưu tiên 2: cùng trạng thái manual → ts mới hơn thắng
         if ((p._grpTs||0) > (ex._grpTs||0)) { dedupAll[dk] = p; continue; }
-        // Bằng ts → ưu tiên bản có điểm
+        // Ưu tiên 3: bằng ts → bản có điểm thắng bản chưa có điểm
         if (typeof p.total_score === 'number' && typeof ex.total_score !== 'number') { dedupAll[dk] = p; }
       }
       perfAllData = Object.values(dedupAll);
@@ -475,6 +599,29 @@ async function fetchAll() {
   updateStatus(ok);
 }
 
+// ════════════════════════════════════════════════
+// FIX: Auto-refresh Sigma tab mỗi 5 giây
+// ════════════════════════════════════════════════
+let sigmaRefreshInterval = null;
+
+function startSigmaAutoRefresh() {
+    if (sigmaRefreshInterval) clearInterval(sigmaRefreshInterval);
+    
+    sigmaRefreshInterval = setInterval(() => {
+        // Chỉ refresh nếu đang ở tab Sigma
+        const sigmaTab = document.getElementById('tab-sigma');
+        if (sigmaTab && sigmaTab.classList.contains('active')) {
+            console.log('🔄 Tự động làm mới dữ liệu Sigma...');
+            rSigma(); // Gọi hàm render lại Sigma
+        }
+    }, 1000); // 5 giây
+}
+
+// Khởi động auto-refresh cho Sigma
+startSigmaAutoRefresh();
+
+// Khi chuyển tab, vẫn giữ interval chạy, chỉ refresh khi active
+// Hàm rSigma đã có sẵn trong code của bạn
 // ════════════════════════════════════════════════
 // RENDER: ĐỐI KHÁNG
 // ════════════════════════════════════════════════
@@ -867,9 +1014,8 @@ function buildSummaryFromData() {
 function rSummary() {
   const q = document.getElementById('qS').value.toLowerCase().trim();
 
-  // Ưu tiên summaryRows từ Python; nếu rỗng thì tự tính từ dữ liệu hiện có
-  const sourceRows = summaryRows.length > 0 ? summaryRows : buildSummaryFromData();
-  const rows = sourceRows.filter(r => !q || (r.donvi||'').toLowerCase().includes(q));
+  // Luôn tính real-time từ combatData + perfAllData (phản ánh xóa/sửa kết quả ngay lập tức)
+  const rows = buildSummaryFromData().filter(r => !q || (r.donvi||'').toLowerCase().includes(q));
 
   document.getElementById('sTotal').textContent = `🏛️ ${rows.length} đơn vị`;
   const w = document.getElementById('wSummary');
@@ -892,6 +1038,399 @@ function rSummary() {
   w.innerHTML = `<table>
     <thead><tr><th>Xếp hạng</th><th>Đơn vị</th><th>🥇 Vàng</th><th>🥈 Bạc</th><th>🥉 Đồng</th><th>Tổng HC</th></tr></thead>
     <tbody>${tbody}</tbody></table>`;
+}
+
+// ════════════════════════════════════════════════
+// RENDER: SIGMA ĐỐI KHÁNG — Sơ đồ bracket theo hạng cân
+// ════════════════════════════════════════════════
+function rSigma() {
+  const w = document.getElementById('wSigma');
+  if (!combatData.length) {
+    w.innerHTML = `<div class="empty"><div class="ico">⚔️</div><div>Chưa có dữ liệu đối kháng</div></div>`;
+    return;
+  }
+
+  // ── Lọc theo sân ──
+  let rows = fSigma === 'all' ? combatData : combatData.filter(r => r._san === fSigma);
+
+  // ── Cập nhật dropdown hạng cân ──
+  const sel = document.getElementById('sigmaWeightFilter');
+  const curW = sel.value;  // Lưu lại giá trị đang chọn
+  const weights = [...new Set(rows.map(r => r.Hang_can || '').filter(Boolean))].sort((a,b) => a.localeCompare(b,'vi'));
+  sel.innerHTML = '<option value="all">Tất cả</option>' +
+    weights.map(wc => `<option value="${esc(wc)}" ${wc === curW ? 'selected' : ''}>${esc(wc)}</option>`).join('');
+  // ✅ FIX: Đọc sel.value SAU khi rebuild innerHTML để lấy giá trị thực tế
+  // Nếu hạng cân cũ vẫn còn trong danh sách → giữ nguyên, ngược lại sẽ về 'all'
+  const weightFilter = sel.value || 'all';
+  if (weightFilter !== 'all') rows = rows.filter(r => (r.Hang_can||'') === weightFilter);
+
+  // ── Dedup: mỗi hạng cân + loại trận + đội chỉ giữ 1 bản ghi từ sân có số nhỏ nhất ──
+  const dedupMap = {};
+  for (const r of rows) {
+    const dk = `${r.Hang_can||''}|${(r.Loai_Tran||'').toLowerCase()}|${r.Ten_Do||''}|${r.Ten_Xanh||''}`;
+    const ex = dedupMap[dk];
+    if (!ex) { dedupMap[dk] = r; continue; }
+    if (fSigma !== 'all' && r._san === fSigma && ex._san !== fSigma) { dedupMap[dk] = r; continue; }
+    const sn = +r._san.replace('san',''), se = +ex._san.replace('san','');
+    if (sn < se) dedupMap[dk] = r;
+  }
+  const deduped = Object.values(dedupMap);
+
+  // ── Nhóm theo hạng cân ──
+  const byWeight = {};
+  for (const r of deduped) {
+    const wc = r.Hang_can || '—';
+    if (!byWeight[wc]) byWeight[wc] = [];
+    byWeight[wc].push(r);
+  }
+
+  const weightKeys = Object.keys(byWeight).sort((a,b) => a.localeCompare(b,'vi'));
+  document.getElementById('sigmaTotal').textContent = `📊 ${weightKeys.length} hạng cân`;
+  document.getElementById('sigmaDone').textContent = `✅ ${deduped.filter(r=>r.winner_name).length} có KQ`;
+
+  if (!weightKeys.length) {
+    w.innerHTML = `<div class="empty"><div class="ico">🔍</div><div>Không có dữ liệu phù hợp</div></div>`;
+    return;
+  }
+
+  // ── Render từng hạng cân ──
+  w.innerHTML = weightKeys.map(wc => renderSigmaWeight(wc, byWeight[wc])).join('');
+}
+
+// ────────────────────────────────────────────────
+// Dựng sơ đồ bracket cho 1 hạng cân
+// ────────────────────────────────────────────────
+function renderSigmaWeight(weightClass, matches) {
+  const doneCount = matches.filter(r => r.winner_name).length;
+  const sanLabel = [...new Set(matches.map(r => r._san.replace('san','Sân ')))].join(', ');
+
+  // Sắp xếp trận theo STT
+  matches.sort((a,b) => Number(a.STT) - Number(b.STT));
+
+  // Xác định thứ tự vòng đấu
+  const typeOrder = { 'vòng loại': 0, 'tứ kết': 1, 'bán kết': 2, 'chung kết': 3 };
+  const getTypeOrder = r => typeOrder[(r.Loai_Tran||'').toLowerCase().trim()] ?? 99;
+
+  // Nhóm theo loại trận (vòng đấu)
+  const rounds = {};
+  for (const r of matches) {
+    const t = (r.Loai_Tran||'').toLowerCase().trim();
+    if (!rounds[t]) rounds[t] = [];
+    rounds[t].push(r);
+  }
+
+  // Sắp xếp các vòng
+  const roundKeys = Object.keys(rounds).sort((a,b) => (typeOrder[a]??99) - (typeOrder[b]??99));
+
+  // ── Dựng cây bracket ──
+  // Tái tạo cây: dựa vào STT của trận và loại trận để suy ra quan hệ cha-con
+  // Logic: chung kết ← bán kết ← tứ kết/vòng loại
+  // Ta dùng STT của trận để map vào "Thắng trận X" từ combatData
+  const stts = matches.map(r => Number(r.STT));
+  const matchByStt = {};
+  for (const r of matches) matchByStt[Number(r.STT)] = r;
+
+  // Render dạng bracket columns
+  // Cột trái nhất = lá (vòng loại/tứ kết hoặc bán kết nếu không có vòng loại)
+  // Cột phải nhất = chung kết
+  const cols = roundKeys.map(rk => rounds[rk]);
+
+  const roundNames = {
+    'vòng loại': '🔸 Vòng loại',
+    'tứ kết': '⚡ Tứ kết',
+    'bán kết': '🥊 Bán kết',
+    'chung kết': '🏆 Chung kết'
+  };
+
+  // ── SVG bracket ──
+  const bracketHTML = buildBracketSVG(matches, weightClass);
+
+  return `<div class="sigma-weight-block">
+    <div class="sigma-weight-header">
+      <div>
+        <div class="sigma-weight-title">🏋️ Hạng cân: ${esc(weightClass)}</div>
+        <div class="sigma-weight-meta">${sanLabel} &nbsp;·&nbsp; ${matches.length} trận &nbsp;·&nbsp; ${doneCount}/${matches.length} có KQ</div>
+      </div>
+      <div style="font-size:22px">${doneCount === matches.length && matches.length > 0 ? '🏁' : '⏳'}</div>
+    </div>
+    <div class="sigma-bracket-area">${bracketHTML}</div>
+  </div>`;
+}
+
+// ────────────────────────────────────────────────
+// Dựng sơ đồ bracket bằng HTML/CSS (không cần SVG)
+// ────────────────────────────────────────────────
+function buildBracketSVG(matches, weightClass) {
+  if (!matches || !matches.length) {
+    return `<div class="sigma-empty">Không có dữ liệu trận đấu</div>`;
+  }
+
+  // ===== CONFIG =====
+  const F_W = 240;   // Fighter box width
+  const F_H = 64;    // Fighter box height
+  const GAP_Y = 30;  // Vertical gap between fighter boxes in same match
+  const WIN_W = 220; // Winner box width
+  const WIN_H = 70;  // Winner box height
+  const COL_GAP = 90;// Horizontal gap between columns
+  const LEFT_PAD = 24;
+  const TOP_PAD = 24;
+  const RIGHT_PAD = 40;
+  const BOTTOM_PAD = 30;
+  const STROKE = 2;
+
+  function escT(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function trunc(s, n) {
+    s = String(s || '');
+    return s.length > n ? s.slice(0, n-1) + '…' : s;
+  }
+  function norm(s) {
+    return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+  }
+  function roundOrd(lt) {
+    const s = norm(lt);
+    if (s==='vong loai') return 1;
+    if (s==='tu ket')    return 2;
+    if (s==='ban ket')   return 3;
+    if (s==='chung ket') return 4;
+    return 99;
+  }
+
+  // ===== SORT MATCHES BY STT =====
+  const ms = [...matches].sort((a,b) => Number(a.STT) - Number(b.STT));
+
+  // ===== GROUP BY ROUND =====
+  // rounds: Map<roundOrd, match[]> — sorted by STT within each round
+  const roundMap = {};
+  for (const m of ms) {
+    const r = roundOrd(m.Loai_Tran);
+    if (!roundMap[r]) roundMap[r] = [];
+    roundMap[r].push(m);
+  }
+  const roundOrds = Object.keys(roundMap).map(Number).sort((a,b) => a-b);
+
+  // ===== BUILD TREE STRUCTURE =====
+  // Strategy: pair rounds by order.
+  // Round[i] feeds into Round[i+1]: every 2 matches in round[i] produce 1 match in round[i+1]
+  // We assign children to parents by position (index), not by name.
+  // This is stable and immune to name changes.
+  //
+  // Node types:
+  //   { kind:'match', match, children:[node,node] }   — internal node
+  //   { kind:'fighter', match, side }                  — leaf node
+
+  function buildNode(m, roundIdx) {
+    const prevRoundIdx = roundIdx - 1;
+    if (prevRoundIdx < 0) {
+      // Leaf round: children are the two fighters
+      return {
+        kind: 'match',
+        match: m,
+        children: [
+          { kind: 'fighter', match: m, side: 'red' },
+          { kind: 'fighter', match: m, side: 'blue' }
+        ]
+      };
+    }
+    const prevOrd = roundOrds[prevRoundIdx];
+    const prevMatches = roundMap[prevOrd];
+    const curOrd = roundOrds[roundIdx];
+    const curMatches = roundMap[curOrd];
+    const myIdx = curMatches.indexOf(m);
+
+    // Each match in this round is fed by 2 matches from previous round
+    const childIdx1 = myIdx * 2;
+    const childIdx2 = myIdx * 2 + 1;
+
+    const child1 = prevMatches[childIdx1]
+      ? buildNode(prevMatches[childIdx1], prevRoundIdx)
+      : { kind: 'fighter', match: m, side: 'red' };   // bye / missing
+    const child2 = prevMatches[childIdx2]
+      ? buildNode(prevMatches[childIdx2], prevRoundIdx)
+      : { kind: 'fighter', match: m, side: 'blue' };
+
+    return { kind: 'match', match: m, children: [child1, child2] };
+  }
+
+  // The final round is the root
+  const finalOrd = roundOrds[roundOrds.length - 1];
+  const finalMatches = roundMap[finalOrd];
+  const finalRoundIdx = roundOrds.length - 1;
+
+  // Build one tree per final match (usually just 1 = chung kết)
+  const trees = finalMatches.map(m => buildNode(m, finalRoundIdx));
+
+  // ===== COMPUTE LAYOUT =====
+  // Returns { height } for each node, then place(node, x, y) assigns x/y coordinates
+
+  function nodeHeight(node) {
+    if (node.kind === 'fighter') return F_H;
+    const [c1, c2] = node.children;
+    return nodeHeight(c1) + GAP_Y + nodeHeight(c2);
+  }
+
+  // ===== SVG DRAWING =====
+  let svg = '';
+
+  function line(x1,y1,x2,y2,color) {
+    svg += `<line x1="${x1|0}" y1="${y1|0}" x2="${x2|0}" y2="${y2|0}" stroke="${color||'#374151'}" stroke-width="${STROKE}" stroke-linecap="round"/>`;
+  }
+  function labelTran(x, y, stt) {
+    svg += `<text x="${x|0}" y="${y|0}" text-anchor="end" font-family="'Segoe UI',Arial,sans-serif" font-size="12" font-weight="700" fill="#7c3aed">Trận ${escT(String(stt))}</text>`;
+  }
+
+  function drawFighterBox(x, y, match, side, isRoot) {
+    const isRed   = side === 'red';
+    const stroke  = isRed ? '#f87171' : '#60a5fa';
+    const fill    = isRed ? '#fee2e2' : '#dbeafe';
+    const txtCol  = isRed ? '#b91c1c' : '#1d4ed8';
+
+    const hasResult = !!match.winner_name;
+    const winSide   = String(match.winner_team||'').toLowerCase();
+    const iWin  = hasResult && winSide === side;
+    const iLose = hasResult && winSide !== side;
+
+    const name = side === 'red' ? (match.Ten_Do  || '—') : (match.Ten_Xanh || '—');
+    const unit = side === 'red' ? (match.Donvi_Do||'')  : (match.Donvi_Xanh||'');
+
+    const opacity = iLose ? 0.45 : 1;
+    const fw = iWin ? '700' : '600';
+    const strikeCol = '#94a3b8';
+
+    svg += `<rect x="${x|0}" y="${y|0}" width="${F_W}" height="${F_H}" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="1.8" opacity="${opacity}"/>`;
+
+    if (iLose) {
+      // strikethrough lines
+      svg += `<line x1="${(x+12)|0}" y1="${(y+28)|0}" x2="${(x+F_W-12)|0}" y2="${(y+28)|0}" stroke="${strikeCol}" stroke-width="1.5"/>`;
+      svg += `<line x1="${(x+12)|0}" y1="${(y+46)|0}" x2="${(x+F_W-12)|0}" y2="${(y+46)|0}" stroke="${strikeCol}" stroke-width="1.2"/>`;
+    }
+
+    const tc = iLose ? '#94a3b8' : txtCol;
+    svg += `<text x="${(x+F_W/2)|0}" y="${(y+30)|0}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="${fw}" fill="${tc}">${escT(trunc(name,25))}</text>`;
+    svg += `<text x="${(x+F_W/2)|0}" y="${(y+49)|0}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${tc}" opacity="0.85">${escT(trunc(unit,23))}</text>`;
+
+    if (iWin && isRoot) {
+      svg += `<text x="${(x+F_W-14)|0}" y="${(y+22)|0}" text-anchor="end" font-family="'Segoe UI Emoji','Segoe UI',Arial,sans-serif" font-size="14">🏆</text>`;
+    }
+  }
+
+  // nextSide: 'final' = trận chung kết (xanh lá), 'red' = sẽ mặc giáp đỏ ở trận tiếp, 'blue' = giáp xanh
+  function drawWinnerBox(x, y, match, nextSide) {
+    const hasResult = !!match.winner_name;
+    const winnerTeam = String(match.winner_team||'').toLowerCase();
+
+    let fill, stroke, txtCol;
+
+    if (nextSide === 'final') {
+      // Trận chung kết: luôn xanh lá
+      fill='#dcfce7'; stroke='#4ade80'; txtCol='#15803d';
+    } else if (nextSide === 'red') {
+      // VĐV thắng sẽ mặc giáp đỏ ở trận tiếp theo
+      fill='#fee2e2'; stroke='#f87171'; txtCol='#b91c1c';
+    } else if (nextSide === 'blue') {
+      // VĐV thắng sẽ mặc giáp xanh ở trận tiếp theo
+      fill='#dbeafe'; stroke='#60a5fa'; txtCol='#1d4ed8';
+    } else {
+      // Chưa xác định
+      fill='#f8fafc'; stroke='#94a3b8'; txtCol='#374151';
+    }
+
+    svg += `<rect x="${x|0}" y="${y|0}" width="${WIN_W}" height="${WIN_H}" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="${STROKE}"/>`;
+
+    if (hasResult) {
+      const name = match.winner_name;
+      const unit = match.winner_unit || (winnerTeam==='red' ? match.Donvi_Do : match.Donvi_Xanh) || '';
+      svg += `<text x="${(x+WIN_W/2)|0}" y="${(y+30)|0}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="${txtCol}">${escT(trunc(name,25))}</text>`;
+      svg += `<text x="${(x+WIN_W/2)|0}" y="${(y+50)|0}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${txtCol}" opacity="0.85">${escT(trunc(unit,23))}</text>`;
+      if (nextSide === 'final') {
+        svg += `<text x="${(x+WIN_W-14)|0}" y="${(y+22)|0}" text-anchor="end" font-family="'Segoe UI Emoji','Segoe UI',Arial,sans-serif" font-size="14">🏆</text>`;
+      }
+    } else {
+      svg += `<text x="${(x+WIN_W/2)|0}" y="${(y+WIN_H/2+5)|0}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="${txtCol}">Thắng trận ${escT(String(match.STT))}</text>`;
+    }
+  }
+
+  // ===== RECURSIVE PLACE & DRAW =====
+  // Returns { rightX, centerY, top, bottom }
+  // nextSide: màu giáp mà VĐV thắng node này sẽ mặc ở trận tiếp theo
+  //   'final' = đây là ô chung kết (xanh lá)
+  //   'red'   = sẽ là giáp đỏ ở trận cha
+  //   'blue'  = sẽ là giáp xanh ở trận cha
+  function placeNode(node, x, y, nextSide) {
+    if (node.kind === 'fighter') {
+      const isRoot = nextSide === 'final';
+      drawFighterBox(x, y, node.match, node.side, isRoot);
+      return {
+        rightX: x + F_W,
+        centerY: y + F_H / 2,
+        top: y,
+        bottom: y + F_H
+      };
+    }
+
+    // kind === 'match'
+    const [c1, c2] = node.children;
+    const h1 = nodeHeight(c1);
+    const h2 = nodeHeight(c2);
+
+    const y1 = y;
+    const y2 = y + h1 + GAP_Y;
+
+    // c1 sẽ là giáp đỏ (Ten_Do) của trận này, c2 sẽ là giáp xanh (Ten_Xanh)
+    const p1 = placeNode(c1, x, y1, 'red');
+    const p2 = placeNode(c2, x, y2, 'blue');
+
+    const cy1 = p1.centerY;
+    const cy2 = p2.centerY;
+    const midCY = (cy1 + cy2) / 2;
+
+    // Connector: vertical leg
+    const legX = Math.max(p1.rightX, p2.rightX) + COL_GAP * 0.4;
+    line(p1.rightX, cy1, legX, cy1);
+    line(p2.rightX, cy2, legX, cy2);
+    line(legX, cy1, legX, cy2);
+
+    // Winner box
+    const wbX = legX + COL_GAP * 0.15;
+    const wbY = midCY - WIN_H / 2;
+    line(legX, midCY, wbX, midCY);
+
+    drawWinnerBox(wbX, wbY, node.match, nextSide);
+
+    labelTran(legX - 4, midCY + 6, node.match.STT);
+
+    const myTop = Math.min(p1.top, p2.top, wbY);
+    const myBot = Math.max(p1.bottom, p2.bottom, wbY + WIN_H);
+
+    return {
+      rightX: wbX + WIN_W,
+      centerY: midCY,
+      top: myTop,
+      bottom: myBot
+    };
+  }
+
+  // ===== RENDER ALL TREES =====
+  let curY = TOP_PAD;
+  let maxRight = 0;
+  let overallBottom = TOP_PAD;
+
+  for (const tree of trees) {
+    const h = nodeHeight(tree);
+    const p = placeNode(tree, LEFT_PAD, curY, 'final');
+    maxRight = Math.max(maxRight, p.rightX);
+    overallBottom = Math.max(overallBottom, p.bottom);
+    curY += h + 50;
+  }
+
+  const svgWidth  = maxRight + RIGHT_PAD;
+  const svgHeight = overallBottom + BOTTOM_PAD;
+
+  return `<svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}"
+    xmlns="http://www.w3.org/2000/svg" style="display:block;font-family:'Segoe UI',Arial,sans-serif">
+    ${svg}
+  </svg>`;
 }
 
 // ════════════════════════════════════════════════
