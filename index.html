@@ -1211,55 +1211,58 @@ function buildBracketSVG(matches, weightClass) {
   const roundOrds = Object.keys(roundMap).map(Number).sort((a,b) => a-b);
 
   // ===== BUILD TREE STRUCTURE =====
-  // Strategy: pair rounds by order.
-  // Round[i] feeds into Round[i+1]: every 2 matches in round[i] produce 1 match in round[i+1]
-  // We assign children to parents by position (index), not by name.
-  // This is stable and immune to name changes.
+  // Dùng src_do / src_xanh (STT của trận nguồn) do Python push lên Firebase
+  // để xác định quan hệ cha-con chính xác, thay vì dùng index vị trí.
   //
   // Node types:
   //   { kind:'match', match, children:[node,node] }   — internal node
   //   { kind:'fighter', match, side }                  — leaf node
 
-  function buildNode(m, roundIdx) {
-    const prevRoundIdx = roundIdx - 1;
-    if (prevRoundIdx < 0) {
-      // Leaf round: children are the two fighters
-      return {
-        kind: 'match',
-        match: m,
-        children: [
-          { kind: 'fighter', match: m, side: 'red' },
-          { kind: 'fighter', match: m, side: 'blue' }
-        ]
-      };
-    }
-    const prevOrd = roundOrds[prevRoundIdx];
-    const prevMatches = roundMap[prevOrd];
-    const curOrd = roundOrds[roundIdx];
-    const curMatches = roundMap[curOrd];
-    const myIdx = curMatches.indexOf(m);
+  // Map STT → match để tra nhanh
+  const matchByStt = {};
+  for (const m of ms) matchByStt[Number(m.STT)] = m;
 
-    // Each match in this round is fed by 2 matches from previous round
-    const childIdx1 = myIdx * 2;
-    const childIdx2 = myIdx * 2 + 1;
+  // Đệ quy: dựng cây từ 1 trận bằng cách tra src_do / src_xanh
+  function buildNode(m) {
+    const srcDo   = m.src_do   != null ? Number(m.src_do)   : null;
+    const srcXanh = m.src_xanh != null ? Number(m.src_xanh) : null;
 
-    const child1 = prevMatches[childIdx1]
-      ? buildNode(prevMatches[childIdx1], prevRoundIdx)
-      : { kind: 'fighter', match: m, side: 'red' };   // bye / missing
-    const child2 = prevMatches[childIdx2]
-      ? buildNode(prevMatches[childIdx2], prevRoundIdx)
+    const childRed  = (srcDo   != null && matchByStt[srcDo])
+      ? buildNode(matchByStt[srcDo])
+      : { kind: 'fighter', match: m, side: 'red' };
+
+    const childBlue = (srcXanh != null && matchByStt[srcXanh])
+      ? buildNode(matchByStt[srcXanh])
       : { kind: 'fighter', match: m, side: 'blue' };
 
-    return { kind: 'match', match: m, children: [child1, child2] };
+    return { kind: 'match', match: m, children: [childRed, childBlue] };
   }
 
-  // The final round is the root
-  const finalOrd = roundOrds[roundOrds.length - 1];
-  const finalMatches = roundMap[finalOrd];
-  const finalRoundIdx = roundOrds.length - 1;
+  // Tìm trận gốc (chung kết / final): trận không được dùng làm src của trận nào khác
+  const usedAsSrc = new Set();
+  for (const m of ms) {
+    if (m.src_do   != null) usedAsSrc.add(Number(m.src_do));
+    if (m.src_xanh != null) usedAsSrc.add(Number(m.src_xanh));
+  }
+  // Các trận là "root" = không bị trận nào dùng làm src
+  // Nếu không có src_do/src_xanh nào cả (dữ liệu cũ), fallback về vòng cao nhất
+  let rootMatches;
+  const hasSrcData = ms.some(m => m.src_do != null || m.src_xanh != null);
+  if (hasSrcData) {
+    rootMatches = ms.filter(m => !usedAsSrc.has(Number(m.STT)));
+    // Nếu có nhiều root, chỉ lấy vòng cao nhất (chung kết)
+    if (rootMatches.length > 1) {
+      const maxOrd = Math.max(...rootMatches.map(m => roundOrd(m.Loai_Tran)));
+      rootMatches = rootMatches.filter(m => roundOrd(m.Loai_Tran) === maxOrd);
+    }
+  } else {
+    // Fallback: vòng cao nhất theo roundOrd
+    const finalOrd = roundOrds[roundOrds.length - 1];
+    rootMatches = roundMap[finalOrd];
+  }
 
-  // Build one tree per final match (usually just 1 = chung kết)
-  const trees = finalMatches.map(m => buildNode(m, finalRoundIdx));
+  // Build one tree per root match (usually just 1 = chung kết)
+  const trees = rootMatches.map(m => buildNode(m));
 
   // ===== COMPUTE LAYOUT =====
   // Returns { height } for each node, then place(node, x, y) assigns x/y coordinates
@@ -1316,34 +1319,40 @@ function buildBracketSVG(matches, weightClass) {
   }
 
   // nextSide: 'final' = trận chung kết (xanh lá), 'red' = sẽ mặc giáp đỏ ở trận tiếp, 'blue' = giáp xanh
-  function drawWinnerBox(x, y, match, nextSide) {
+  // isLoser: true → ô này là người THUA trận cha (đã bị loại), cần gạch ngang
+  function drawWinnerBox(x, y, match, nextSide, isLoser) {
     const hasResult = !!match.winner_name;
     const winnerTeam = String(match.winner_team||'').toLowerCase();
+    const strikeCol = '#94a3b8';
 
     let fill, stroke, txtCol;
 
     if (nextSide === 'final') {
-      // Trận chung kết: luôn xanh lá
       fill='#dcfce7'; stroke='#4ade80'; txtCol='#15803d';
     } else if (nextSide === 'red') {
-      // VĐV thắng sẽ mặc giáp đỏ ở trận tiếp theo
       fill='#fee2e2'; stroke='#f87171'; txtCol='#b91c1c';
     } else if (nextSide === 'blue') {
-      // VĐV thắng sẽ mặc giáp xanh ở trận tiếp theo
       fill='#dbeafe'; stroke='#60a5fa'; txtCol='#1d4ed8';
     } else {
-      // Chưa xác định
       fill='#f8fafc'; stroke='#94a3b8'; txtCol='#374151';
     }
 
-    svg += `<rect x="${x|0}" y="${y|0}" width="${WIN_W}" height="${WIN_H}" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="${STROKE}"/>`;
+    // Nếu đây là ô người THUA (bị loại ở vòng sau) → làm mờ + gạch ngang
+    const opacity = isLoser ? 0.45 : 1;
+    svg += `<rect x="${x|0}" y="${y|0}" width="${WIN_W}" height="${WIN_H}" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="${STROKE}" opacity="${opacity}"/>`;
 
     if (hasResult) {
       const name = match.winner_name;
       const unit = match.winner_unit || (winnerTeam==='red' ? match.Donvi_Do : match.Donvi_Xanh) || '';
-      svg += `<text x="${(x+WIN_W/2)|0}" y="${(y+30)|0}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="${txtCol}">${escT(trunc(name,25))}</text>`;
-      svg += `<text x="${(x+WIN_W/2)|0}" y="${(y+50)|0}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${txtCol}" opacity="0.85">${escT(trunc(unit,23))}</text>`;
-      if (nextSide === 'final') {
+      const tc = isLoser ? '#94a3b8' : txtCol;
+      svg += `<text x="${(x+WIN_W/2)|0}" y="${(y+30)|0}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="${tc}" opacity="${opacity}">${escT(trunc(name,25))}</text>`;
+      svg += `<text x="${(x+WIN_W/2)|0}" y="${(y+50)|0}" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${tc}" opacity="${isLoser ? 0.45 : 0.85}">${escT(trunc(unit,23))}</text>`;
+      // Gạch ngang nếu là người thua
+      if (isLoser) {
+        svg += `<line x1="${(x+12)|0}" y1="${(y+28)|0}" x2="${(x+WIN_W-12)|0}" y2="${(y+28)|0}" stroke="${strikeCol}" stroke-width="1.5"/>`;
+        svg += `<line x1="${(x+12)|0}" y1="${(y+46)|0}" x2="${(x+WIN_W-12)|0}" y2="${(y+46)|0}" stroke="${strikeCol}" stroke-width="1.2"/>`;
+      }
+      if (nextSide === 'final' && !isLoser) {
         svg += `<text x="${(x+WIN_W-14)|0}" y="${(y+22)|0}" text-anchor="end" font-family="'Segoe UI Emoji','Segoe UI',Arial,sans-serif" font-size="14">🏆</text>`;
       }
     } else {
@@ -1357,8 +1366,16 @@ function buildBracketSVG(matches, weightClass) {
   //   'final' = đây là ô chung kết (xanh lá)
   //   'red'   = sẽ là giáp đỏ ở trận cha
   //   'blue'  = sẽ là giáp xanh ở trận cha
-  function placeNode(node, x, y, nextSide) {
+  // parentMatch: trận cha (để biết ai thắng/thua ở vòng tiếp theo)
+  // mySide: 'red' | 'blue' — vị trí của node này trong trận cha
+  function placeNode(node, x, y, nextSide, parentMatch, mySide) {
+    // Tính xem node này có phải là "người thua" không:
+    // → parentMatch đã có kết quả VÀ người thắng parentMatch KHÔNG phải phía mySide
+    const isLoserOfParent = parentMatch && !!parentMatch.winner_name &&
+      String(parentMatch.winner_team||'').toLowerCase() !== mySide;
+
     if (node.kind === 'fighter') {
+      // Fighter lá: isLoser tính từ trận của chính nó (giống logic cũ)
       const isRoot = nextSide === 'final';
       drawFighterBox(x, y, node.match, node.side, isRoot);
       return {
@@ -1378,8 +1395,9 @@ function buildBracketSVG(matches, weightClass) {
     const y2 = y + h1 + GAP_Y;
 
     // c1 sẽ là giáp đỏ (Ten_Do) của trận này, c2 sẽ là giáp xanh (Ten_Xanh)
-    const p1 = placeNode(c1, x, y1, 'red');
-    const p2 = placeNode(c2, x, y2, 'blue');
+    // Truyền thêm node.match + side để cấp con biết mình có bị thua không
+    const p1 = placeNode(c1, x, y1, 'red',  node.match, 'red');
+    const p2 = placeNode(c2, x, y2, 'blue', node.match, 'blue');
 
     const cy1 = p1.centerY;
     const cy2 = p2.centerY;
@@ -1396,7 +1414,8 @@ function buildBracketSVG(matches, weightClass) {
     const wbY = midCY - WIN_H / 2;
     line(legX, midCY, wbX, midCY);
 
-    drawWinnerBox(wbX, wbY, node.match, nextSide);
+    // Truyền isLoserOfParent vào drawWinnerBox để gạch ngang nếu cần
+    drawWinnerBox(wbX, wbY, node.match, nextSide, isLoserOfParent);
 
     labelTran(legX - 4, midCY + 6, node.match.STT);
 
@@ -1418,7 +1437,7 @@ function buildBracketSVG(matches, weightClass) {
 
   for (const tree of trees) {
     const h = nodeHeight(tree);
-    const p = placeNode(tree, LEFT_PAD, curY, 'final');
+    const p = placeNode(tree, LEFT_PAD, curY, 'final', null, null);
     maxRight = Math.max(maxRight, p.rightX);
     overallBottom = Math.max(overallBottom, p.bottom);
     curY += h + 50;
