@@ -1728,21 +1728,43 @@ function buildBracketSVG(matches, weightClass) {
   const roundOrds = Object.keys(roundMap).map(Number).sort((a,b) => a-b);
 
   // ===== BUILD TREE STRUCTURE =====
-  // Dùng src_do / src_xanh (STT của trận nguồn) do Python push lên Firebase
-  // để xác định quan hệ cha-con chính xác, thay vì dùng index vị trí.
-  //
-  // Node types:
-  //   { kind:'match', match, children:[node,node] }   — internal node
-  //   { kind:'fighter', match, side }                  — leaf node
+  // Ưu tiên: src_do / src_xanh (STT của trận nguồn)
+  // Fallback: phân tích Ten_Do / Ten_Xanh có dạng "Thắng trận X"
 
   // Map STT → match để tra nhanh
   const matchByStt = {};
   for (const m of ms) matchByStt[Number(m.STT)] = m;
 
-  // Đệ quy: dựng cây từ 1 trận bằng cách tra src_do / src_xanh
+  // Trích xuất STT nguồn từ chuỗi "Thắng trận X"
+  function extractSrcFromText(txt) {
+    if (!txt) return null;
+    const s = String(txt).trim();
+    const m = s.match(/th[aắ]ng\s+tr[aậ]n\s+(\d+)/i);
+    if (m) return Number(m[1]);
+    return null;
+  }
+
+  // Lấy src_do của trận m: ưu tiên field src_do, fallback đọc Ten_Do
+  function getSrcDo(m) {
+    if (m.src_do != null) return Number(m.src_do);
+    return extractSrcFromText(m.Ten_Do);
+  }
+
+  // Lấy src_xanh của trận m
+  function getSrcXanh(m) {
+    if (m.src_xanh != null) return Number(m.src_xanh);
+    return extractSrcFromText(m.Ten_Xanh);
+  }
+
+  // Kiểm tra trận có src thực sự không (ít nhất 1 phía là "Thắng trận X")
+  function hasSrc(m) {
+    return getSrcDo(m) != null || getSrcXanh(m) != null;
+  }
+
+  // Đệ quy: dựng cây từ 1 trận
   function buildNode(m) {
-    const srcDo   = m.src_do   != null ? Number(m.src_do)   : null;
-    const srcXanh = m.src_xanh != null ? Number(m.src_xanh) : null;
+    const srcDo   = getSrcDo(m);
+    const srcXanh = getSrcXanh(m);
 
     const childRed  = (srcDo   != null && matchByStt[srcDo])
       ? buildNode(matchByStt[srcDo])
@@ -1755,13 +1777,11 @@ function buildBracketSVG(matches, weightClass) {
     return { kind: 'match', match: m, children: [childRed, childBlue] };
   }
 
-  // ===== FALLBACK: Tự động suy ra cây bracket từ round order khi không có src_do/src_xanh =====
-  // Mỗi cặp trận trong vòng trước "feed" vào 1 trận ở vòng sau (theo thứ tự STT)
+  // ===== FALLBACK: Tự ghép theo round order khi KHÔNG CÓ BẤT KỲ src nào =====
   function buildTreeFromRounds() {
-    const orderedRounds = [...roundOrds]; // đã sort tăng dần (lá → root)
+    const orderedRounds = [...roundOrds]; // lá → root
     if (!orderedRounds.length) return [];
 
-    // Khởi tạo: vòng lá — mỗi trận có 2 con là fighter
     let prevNodes = roundMap[orderedRounds[0]].map(m => ({
       kind: 'match', match: m,
       children: [
@@ -1770,40 +1790,44 @@ function buildBracketSVG(matches, weightClass) {
       ]
     }));
 
-    // Ghép từng vòng tiếp theo
     for (let ri = 1; ri < orderedRounds.length; ri++) {
       const curRound = roundMap[orderedRounds[ri]];
       const curNodes = curRound.map(m => ({ kind: 'match', match: m, children: null }));
-
       for (let ci = 0; ci < curNodes.length; ci++) {
-        const leftChild  = prevNodes[ci * 2]     || { kind: 'fighter', match: curNodes[ci].match, side: 'red' };
-        const rightChild = prevNodes[ci * 2 + 1] || { kind: 'fighter', match: curNodes[ci].match, side: 'blue' };
-        curNodes[ci].children = [leftChild, rightChild];
+        const l = prevNodes[ci * 2]     || { kind: 'fighter', match: curNodes[ci].match, side: 'red' };
+        const r = prevNodes[ci * 2 + 1] || { kind: 'fighter', match: curNodes[ci].match, side: 'blue' };
+        curNodes[ci].children = [l, r];
       }
       prevNodes = curNodes;
     }
     return prevNodes;
   }
 
-  // Tìm trận gốc (chung kết / final): trận không được dùng làm src của trận nào khác
-  const hasSrcData = ms.some(m => m.src_do != null || m.src_xanh != null);
+  // ===== CHỌN CHIẾN LƯỢC BUILD CÂY =====
+  // Nếu BẤT KỲ trận nào có src (src_do/src_xanh hoặc Ten "Thắng trận X") → dùng src-based
+  const anySrcData = ms.some(m => hasSrc(m));
   let trees;
 
-  if (hasSrcData) {
+  if (anySrcData) {
+    // Tìm root = trận không bị trận nào khác trỏ src đến
     const usedAsSrc = new Set();
     for (const m of ms) {
-      if (m.src_do   != null) usedAsSrc.add(Number(m.src_do));
-      if (m.src_xanh != null) usedAsSrc.add(Number(m.src_xanh));
+      const sd = getSrcDo(m);   if (sd   != null) usedAsSrc.add(sd);
+      const sx = getSrcXanh(m); if (sx   != null) usedAsSrc.add(sx);
     }
     let rootMatches = ms.filter(m => !usedAsSrc.has(Number(m.STT)));
-    // Nếu có nhiều root, chỉ lấy vòng cao nhất (chung kết)
     if (rootMatches.length > 1) {
       const maxOrd = Math.max(...rootMatches.map(m => roundOrd(m.Loai_Tran)));
       rootMatches = rootMatches.filter(m => roundOrd(m.Loai_Tran) === maxOrd);
     }
+    // Nếu không tìm được root → lấy vòng cao nhất
+    if (!rootMatches.length) {
+      const finalOrd = roundOrds[roundOrds.length - 1];
+      rootMatches = roundMap[finalOrd] || [];
+    }
     trees = rootMatches.map(m => buildNode(m));
   } else {
-    // Fallback: tự suy ra cây từ round order — hiển thị đầy đủ tất cả vòng đấu
+    // Hoàn toàn không có src → ghép theo round order
     trees = buildTreeFromRounds();
   }
 
