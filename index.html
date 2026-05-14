@@ -264,12 +264,277 @@
     .summary-row-click{cursor:pointer;transition:background .15s}
     .summary-row-click:hover td{background:#eff6ff!important}
     .summary-row-click td:nth-child(2){text-decoration:underline;text-decoration-color:#93c5fd;text-underline-offset:3px}
+
+    /* ══════════════════════════════════════
+       TRANG TỔNG QUAN – BRIGHT LIGHT THEME
+    ══════════════════════════════════════ */
+    @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
+
+    #tab-overview {
+      min-height: calc(100vh - 112px);
+      background: linear-gradient(160deg, #e8f4fd 0%, #f0f7ff 35%, #fef9ec 70%, #fff5f7 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Soft decorative circles */
+    #tab-overview::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59,130,246,0.10) 0%, transparent 70%);
+      top: -200px; right: -150px;
+      pointer-events: none;
+    }
+    #tab-overview::after {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(251,146,60,0.10) 0%, transparent 70%);
+      bottom: -150px; left: -100px;
+      pointer-events: none;
+    }
+
+    /* Floating blobs */
+    .ov-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+      animation: orbFloat 9s ease-in-out infinite;
+    }
+    .ov-orb-1 {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, rgba(99,179,255,0.22), transparent 65%);
+      top: -80px; left: -60px;
+      animation-delay: 0s;
+    }
+    .ov-orb-2 {
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(251,191,36,0.20), transparent 65%);
+      bottom: 40px; right: -40px;
+      animation-delay: -5s;
+    }
+    .ov-orb-3 {
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, rgba(52,211,153,0.16), transparent 65%);
+      top: 55%; left: 55%;
+      animation-delay: -2.5s;
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%       { transform: translateY(-24px) scale(1.04); }
+    }
+
+    .ov-content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 44px 24px 56px;
+      min-height: calc(100vh - 112px);
+    }
+
+    /* Emblem */
+    .ov-emblem {
+      width: 100px; height: 100px;
+      background: linear-gradient(135deg, #dbeafe, #eff6ff);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 30px rgba(37,99,235,0.22), 0 0 0 6px rgba(37,99,235,0.10);
+      margin-bottom: 24px;
+      animation: emblemPop 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
+      border: 2px solid #bfdbfe;
+    }
+    @keyframes emblemPop {
+      from { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg);     opacity: 1; }
+    }
+
+    /* Badges */
+    .ov-badge-row {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 14px;
+      animation: fadeUp 0.5s 0.2s both;
+    }
+    .ov-badge {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.8px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+    .ov-badge-live {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ov-badge-live .live-dot-sm {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 1.5s infinite;
+    }
+    .ov-badge-sport {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border: 1px solid #93c5fd;
+    }
+
+    /* Tên giải */
+    .ov-title {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(34px, 6vw, 68px);
+      font-weight: 700;
+      color: #0f172a;
+      text-align: center;
+      line-height: 1.05;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      animation: fadeUp 0.6s 0.3s both;
+    }
+    .ov-title span {
+      background: linear-gradient(120deg, #2563eb 0%, #0ea5e9 45%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .ov-subtitle {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 14px; font-weight: 400;
+      color: #64748b;
+      margin-bottom: 40px;
+      letter-spacing: 0.2px;
+      animation: fadeUp 0.6s 0.4s both;
+    }
+
+    @keyframes fadeUp {
+      from { transform: translateY(18px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* Stats row */
+    .ov-stats {
+      display: flex; gap: 14px; margin-bottom: 44px;
+      flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.6s 0.5s both;
+    }
+    .ov-stat {
+      text-align: center;
+      padding: 14px 22px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      min-width: 88px;
+    }
+    .ov-stat-num {
+      font-family: 'Teko', sans-serif;
+      font-size: 30px; font-weight: 600;
+      color: #2563eb;
+      line-height: 1;
+    }
+    .ov-stat-lbl {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.6px;
+      color: #94a3b8;
+      margin-top: 3px;
+      text-transform: uppercase;
+    }
+
+    /* Divider */
+    .ov-divider {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 20px;
+      animation: fadeUp 0.6s 0.55s both;
+    }
+
+    /* Grid 6 nút */
+    .ov-nav-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      max-width: 780px;
+      width: 100%;
+      animation: fadeUp 0.7s 0.6s both;
+    }
+    @media (max-width: 620px) {
+      .ov-nav-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+    @media (max-width: 380px) {
+      .ov-nav-grid { grid-template-columns: 1fr; }
+    }
+
+    .ov-nav-btn {
+      position: relative;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 9px;
+      padding: 22px 16px 18px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 18px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      text-decoration: none;
+    }
+    .ov-nav-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 14px 36px rgba(0,0,0,0.12);
+    }
+    .ov-nav-btn:active { transform: translateY(-2px); }
+
+    /* Màu riêng mỗi nút khi hover */
+    .ov-nav-btn[data-color="amber"]:hover  { border-color: #fbbf24; background: #fffbeb; box-shadow: 0 14px 36px rgba(245,158,11,0.18); }
+    .ov-nav-btn[data-color="blue"]:hover   { border-color: #60a5fa; background: #eff6ff; box-shadow: 0 14px 36px rgba(37,99,235,0.16); }
+    .ov-nav-btn[data-color="gold"]:hover   { border-color: #fcd34d; background: #fefce8; box-shadow: 0 14px 36px rgba(234,179,8,0.18); }
+    .ov-nav-btn[data-color="green"]:hover  { border-color: #4ade80; background: #f0fdf4; box-shadow: 0 14px 36px rgba(34,197,94,0.16); }
+    .ov-nav-btn[data-color="teal"]:hover   { border-color: #2dd4bf; background: #f0fdfa; box-shadow: 0 14px 36px rgba(20,184,166,0.16); }
+    .ov-nav-btn[data-color="purple"]:hover { border-color: #a78bfa; background: #f5f3ff; box-shadow: 0 14px 36px rgba(139,92,246,0.16); }
+
+    .ov-nav-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .ov-nav-label {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 13px; font-weight: 700;
+      color: #1e293b;
+      line-height: 1.35;
+    }
+
+    .ov-nav-desc {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px; font-weight: 400;
+      color: #94a3b8;
+      line-height: 1.3;
+    }
+
+    /* Tab overview */
+    .main-tab.overview-tab {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .main-tab.overview-tab .ov-home-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: currentColor;
+      opacity: 0.6;
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>📋 Kết quả thi đấu – Thư ký</h1>
+  <h1 id="headerTitle">📋 Kết quả thi đấu – Thư ký</h1>
   <div style="text-align:right">
     <div class="live-dot" id="liveStatus"><div class="dot"></div><span>Đang theo dõi</span></div>
     <div class="last-update" id="lastUpdate">Chưa cập nhật</div>
@@ -278,16 +543,139 @@
 
 <!-- MAIN TABS -->
 <div class="main-tabs">
-  <div class="main-tab active"  onclick="switchTab('combat',this)">⚔️ Đối kháng</div>
-  <div class="main-tab"         onclick="switchTab('sigma',this)">🏆 Sigma Đối kháng</div>
-  <div class="main-tab"         onclick="switchTab('combat-medal',this)">🥊 Huy chương Đối kháng</div>
-  <div class="main-tab"         onclick="switchTab('perf-result',this)">🎽 Kết quả Hội diễn</div>
-  <div class="main-tab"         onclick="switchTab('perf-medal',this)">🏅 Huy chương Hội diễn</div>
-  <div class="main-tab"         onclick="switchTab('summary',this)">🏆 Bảng tổng sắp</div>
+  <div class="main-tab overview-tab active" onclick="switchTab('overview',this)"><span class="ov-home-dot"></span>🏠 Tổng quan</div>
+  <div class="main-tab"  onclick="switchTab('sigma',this)">🏆 Sigma Đối kháng</div>
+  <div class="main-tab"  onclick="switchTab('combat',this)">⚔️ Danh sách trận Đối kháng</div>
+  <div class="main-tab"  onclick="switchTab('combat-medal',this)">🥊 Huy chương Đối kháng</div>
+  <div class="main-tab"  onclick="switchTab('perf-result',this)">🎽 Hội diễn</div>
+  <div class="main-tab"  onclick="switchTab('perf-medal',this)">🏅 Huy chương Hội diễn</div>
+  <div class="main-tab"  onclick="switchTab('summary',this)">🏆 Tổng sắp</div>
+</div>
+
+<!-- ══════════════════ TAB TỔNG QUAN ══════════════════ -->
+<div id="tab-overview" class="tab-content active">
+  <div class="ov-orb ov-orb-1"></div>
+  <div class="ov-orb ov-orb-2"></div>
+  <div class="ov-orb ov-orb-3"></div>
+  <div class="ov-content">
+
+    <!-- Hình võ phục Vovinam: áo xanh blue, đai vàng -->
+    <div class="ov-emblem">
+      <svg viewBox="0 0 80 80" width="56" height="56" xmlns="http://www.w3.org/2000/svg" style="display:block">
+        <!-- Đầu -->
+        <ellipse cx="40" cy="13" rx="9" ry="10" fill="#f5cba7"/>
+        <!-- Cổ -->
+        <rect x="36" y="22" width="8" height="5" rx="2" fill="#f5cba7"/>
+        <!-- Thân áo (xanh blue Vovinam) -->
+        <path d="M22 27 Q26 24 36 26 L40 34 L44 26 Q54 24 58 27 L62 50 L18 50 Z" fill="#1a56db"/>
+        <!-- Cổ áo trái -->
+        <path d="M36 26 L34 36 L40 34 Z" fill="#1240a4"/>
+        <!-- Cổ áo phải -->
+        <path d="M44 26 L46 36 L40 34 Z" fill="#1240a4"/>
+        <!-- Tay trái (xanh) -->
+        <path d="M22 27 L14 42 Q13 46 16 47 L24 34" fill="#1a56db"/>
+        <!-- Tay phải (xanh) -->
+        <path d="M58 27 L66 42 Q67 46 64 47 L56 34" fill="#1a56db"/>
+        <!-- Bàn tay trái -->
+        <ellipse cx="15" cy="47" rx="4" ry="3" fill="#f5cba7"/>
+        <!-- Bàn tay phải -->
+        <ellipse cx="65" cy="47" rx="4" ry="3" fill="#f5cba7"/>
+        <!-- ĐAI VÀNG -->
+        <rect x="18" y="48" width="44" height="5" rx="2" fill="#f6c000"/>
+        <!-- Nút thắt đai (màu vàng đậm) -->
+        <rect x="36" y="47" width="8" height="7" rx="1.5" fill="#d4a000"/>
+        <!-- Quần (xanh đậm) -->
+        <path d="M18 53 L24 70 L36 70 L40 58 L44 70 L56 70 L62 53 Z" fill="#1240a4"/>
+        <!-- Đường giữa quần -->
+        <line x1="40" y1="53" x2="40" y2="70" stroke="#0d3080" stroke-width="1"/>
+        <!-- Chân trái -->
+        <rect x="22" y="70" width="12" height="5" rx="2" fill="#1240a4"/>
+        <!-- Chân phải -->
+        <rect x="46" y="70" width="12" height="5" rx="2" fill="#1240a4"/>
+      </svg>
+    </div>
+
+    <div class="ov-badge-row">
+      <div class="ov-badge ov-badge-live">
+        <div class="live-dot-sm"></div>
+        <span>Trực tiếp</span>
+      </div>
+      <div class="ov-badge ov-badge-sport">Vovinam</div>
+    </div>
+
+    <div class="ov-title" id="ovTitleMain">
+      <span id="ovTitleText">Giải đấu Vovinam</span>
+    </div>
+
+    <div class="ov-subtitle" id="ovSubtitle">Hệ thống theo dõi kết quả thi đấu</div>
+
+    <!-- Thống kê nhanh -->
+    <div class="ov-stats">
+      <div class="ov-stat">
+        <div class="ov-stat-num" id="ovStatTran">—</div>
+        <div class="ov-stat-lbl">Trận đấu Đối kháng</div>
+      </div>
+      <div class="ov-stat">
+        <div class="ov-stat-num" id="ovStatKQ">—</div>
+        <div class="ov-stat-lbl">Có kết quả</div>
+      </div>
+      <div class="ov-stat">
+        <div class="ov-stat-num" id="ovStatVDV">—</div>
+        <div class="ov-stat-lbl">Bài Hội diễn</div>
+      </div>
+      <div class="ov-stat">
+        <div class="ov-stat-num" id="ovStatDonVi">—</div>
+        <div class="ov-stat-lbl">Đơn vị</div>
+      </div>
+    </div>
+
+    <div class="ov-divider">— Chọn mục xem —</div>
+
+    <!-- 6 nút điều hướng -->
+    <div class="ov-nav-grid">
+
+      <div class="ov-nav-btn" data-color="amber" onclick="navTo('sigma')">
+        <div class="ov-nav-icon">🏆</div>
+        <div class="ov-nav-label">Sigma<br>Đối kháng</div>
+        <div class="ov-nav-desc">Cây nhánh thi đấu loại trực tiếp</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="blue" onclick="navTo('combat')">
+        <div class="ov-nav-icon">⚔️</div>
+        <div class="ov-nav-label">Danh sách trận<br>Đối kháng</div>
+        <div class="ov-nav-desc">Toàn bộ trận đấu & kết quả</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="gold" onclick="navTo('combat-medal')">
+        <div class="ov-nav-icon">🥇</div>
+        <div class="ov-nav-label">Huy chương<br>Đối kháng</div>
+        <div class="ov-nav-desc">Vàng · Bạc · Đồng theo hạng cân</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="green" onclick="navTo('perf-result')">
+        <div class="ov-nav-icon">🎽</div>
+        <div class="ov-nav-label">Hội diễn</div>
+        <div class="ov-nav-desc">Kết quả & điểm số biểu diễn quyền</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="teal" onclick="navTo('perf-medal')">
+        <div class="ov-nav-icon">🏅</div>
+        <div class="ov-nav-label">Huy chương<br>Hội diễn</div>
+        <div class="ov-nav-desc">Xếp hạng huy chương biểu diễn</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="purple" onclick="navTo('summary')">
+        <div class="ov-nav-icon">📊</div>
+        <div class="ov-nav-label">Tổng sắp</div>
+        <div class="ov-nav-desc">Bảng xếp hạng huy chương đơn vị</div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════ TAB 1: ĐỐI KHÁNG ══════════════════ -->
-<div id="tab-combat" class="tab-content active">
+<div id="tab-combat" class="tab-content">
   <div class="controls">
     <div class="san-tabs" id="sanC">
       <button class="san-btn active" onclick="fSan('c','all',this)">🏟️ Tất cả</button>
@@ -438,11 +826,121 @@ let perfAllData = [];   // toàn bộ VĐV hội diễn (kể cả chưa có huy
 // ════════════════════════════════════════════════
 // TAB SWITCHING
 // ════════════════════════════════════════════════
-function switchTab(name, el) {
+function switchTab(name, el, pushHistory) {
   document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
+  // Push vào history để nút Back hoạt động (mặc định là true)
+  if (pushHistory !== false) {
+    history.pushState({ tab: name }, '', '#tab=' + name);
+  }
+}
+
+function navTo(name) {
+  // Tìm tab button tương ứng và click
+  const tabs = document.querySelectorAll('.main-tab');
+  const tabMap = {
+    'sigma':        '🏆 Sigma Đối kháng',
+    'combat':       '⚔️ Danh sách trận Đối kháng',
+    'combat-medal': '🥊 Huy chương Đối kháng',
+    'perf-result':  '🎽 Hội diễn',
+    'perf-medal':   '🏅 Huy chương Hội diễn',
+    'summary':      '🏆 Tổng sắp',
+  };
+  for (const t of tabs) {
+    if (t.textContent.trim().includes(tabMap[name]?.slice(2).trim() || '____NONE')) {
+      switchTab(name, t);
+      return;
+    }
+  }
+  // fallback: chuyển trực tiếp
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  const tc = document.getElementById('tab-' + name);
+  if (tc) {
+    tc.classList.add('active');
+    history.pushState({ tab: name }, '', '#tab=' + name);
+  }
+}
+
+// Xử lý nút Back/Forward của trình duyệt
+window.addEventListener('popstate', function(e) {
+  const tabName = e.state?.tab || 'overview';
+  const tabs = document.querySelectorAll('.main-tab');
+  // Tìm tab element phù hợp và activate (không push history thêm)
+  let found = false;
+  for (const t of tabs) {
+    const onclick = t.getAttribute('onclick') || '';
+    if (onclick.includes("'" + tabName + "'")) {
+      document.querySelectorAll('.main-tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const tc = document.getElementById('tab-' + tabName);
+      if (tc) tc.classList.add('active');
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    // fallback về overview
+    document.querySelectorAll('.main-tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    const firstTab = document.querySelector('.main-tab');
+    if (firstTab) firstTab.classList.add('active');
+    const overviewTc = document.getElementById('tab-overview');
+    if (overviewTc) overviewTc.classList.add('active');
+  }
+});
+
+// Ghi initial state khi trang load lần đầu
+(function initHistory() {
+  // Đọc hash nếu có (ví dụ khi reload trang với #tab=combat)
+  const hash = location.hash;
+  const match = hash.match(/[#&]tab=([^&]+)/);
+  const initTab = match ? match[1] : 'overview';
+  history.replaceState({ tab: initTab }, '', initTab === 'overview' ? location.pathname : '#tab=' + initTab);
+  if (initTab !== 'overview') {
+    // Activate đúng tab nếu có hash khi load
+    const tc = document.getElementById('tab-' + initTab);
+    const tabs = document.querySelectorAll('.main-tab');
+    if (tc) {
+      document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+      tc.classList.add('active');
+      for (const t of tabs) {
+        const onclick = t.getAttribute('onclick') || '';
+        if (onclick.includes("'" + initTab + "'")) {
+          document.querySelectorAll('.main-tab').forEach(x => x.classList.remove('active'));
+          t.classList.add('active');
+          break;
+        }
+      }
+    }
+  }
+})();
+
+// ════════════════════════════════════════════════
+// Cập nhật tên giải đấu (dùng chung nhiều nơi)
+// ════════════════════════════════════════════════
+function setTournamentName(nm) {
+  if (!nm || !nm.trim()) return;
+  nm = nm.trim();
+  document.getElementById('ovTitleText').textContent = nm;
+  document.getElementById('headerTitle').textContent = '📋 ' + nm;
+  document.title = nm + ' – Kết quả thi đấu';
+}
+
+function updateOverviewStats() {
+  // Số trận đấu
+  const total = combatData.length;
+  const done  = combatData.filter(r => r.winner_name).length;
+  const vdvHD = perfAllData.length;
+  const donviSet = new Set();
+  for (const r of summaryRows) if (r.donvi) donviSet.add(r.donvi);
+  document.getElementById('ovStatTran').textContent  = total || '—';
+  document.getElementById('ovStatKQ').textContent    = done  || '—';
+  document.getElementById('ovStatVDV').textContent   = vdvHD || '—';
+  document.getElementById('ovStatDonVi').textContent = donviSet.size || '—';
 }
 
 function fSan(tab, san, btn) {
@@ -517,6 +1015,9 @@ async function fetchAll() {
         lists.map(l=>`<option value="${l}" ${l===curVal?'selected':''}>${l}</option>`).join('');
       rCombat(); rCombatMedal(); rSigma();
       rSummary(); // Cập nhật Tổng sắp khi có KQ đối kháng mới
+      // Thử lấy tên giải từ record đối kháng nếu có
+      const nameFromCombat = dedupedFlat.find(r => r.competition_name)?.competition_name;
+      if (nameFromCombat) setTournamentName(nameFromCombat);
     }
 
     // 2) performance (hội diễn)
@@ -592,8 +1093,24 @@ async function fetchAll() {
     if (r3.ok) {
       const d = await r3.json();
       summaryRows = (d && d.rows) ? d.rows : [];
+      // Cập nhật tên giải đấu từ Firebase nếu có
+      if (d && d.competition_name) {
+        const nm = d.competition_name.trim();
+        if (nm) setTournamentName(nm);
+      }
       rSummary();
     }
+
+    // Luôn poll tên giải từ node riêng — cập nhật ngay khi Python áp dụng cài đặt
+    try {
+      const r4 = await fetchWithTimeout(`${FB}/competition_name.json`);
+      if (r4.ok) {
+        const nm = await r4.json();
+        if (nm && typeof nm === 'string' && nm.trim()) setTournamentName(nm.trim());
+      }
+    } catch(e) { /* bỏ qua lỗi mạng */ }
+    // Luôn cập nhật stats tổng quan sau khi fetch xong
+    updateOverviewStats();
 
   } catch(e) { ok = false; console.error('fetchAll error:', e); }
   updateStatus(ok);
@@ -1238,31 +1755,57 @@ function buildBracketSVG(matches, weightClass) {
     return { kind: 'match', match: m, children: [childRed, childBlue] };
   }
 
-  // Tìm trận gốc (chung kết / final): trận không được dùng làm src của trận nào khác
-  const usedAsSrc = new Set();
-  for (const m of ms) {
-    if (m.src_do   != null) usedAsSrc.add(Number(m.src_do));
-    if (m.src_xanh != null) usedAsSrc.add(Number(m.src_xanh));
+  // ===== FALLBACK: Tự động suy ra cây bracket từ round order khi không có src_do/src_xanh =====
+  // Mỗi cặp trận trong vòng trước "feed" vào 1 trận ở vòng sau (theo thứ tự STT)
+  function buildTreeFromRounds() {
+    const orderedRounds = [...roundOrds]; // đã sort tăng dần (lá → root)
+    if (!orderedRounds.length) return [];
+
+    // Khởi tạo: vòng lá — mỗi trận có 2 con là fighter
+    let prevNodes = roundMap[orderedRounds[0]].map(m => ({
+      kind: 'match', match: m,
+      children: [
+        { kind: 'fighter', match: m, side: 'red' },
+        { kind: 'fighter', match: m, side: 'blue' }
+      ]
+    }));
+
+    // Ghép từng vòng tiếp theo
+    for (let ri = 1; ri < orderedRounds.length; ri++) {
+      const curRound = roundMap[orderedRounds[ri]];
+      const curNodes = curRound.map(m => ({ kind: 'match', match: m, children: null }));
+
+      for (let ci = 0; ci < curNodes.length; ci++) {
+        const leftChild  = prevNodes[ci * 2]     || { kind: 'fighter', match: curNodes[ci].match, side: 'red' };
+        const rightChild = prevNodes[ci * 2 + 1] || { kind: 'fighter', match: curNodes[ci].match, side: 'blue' };
+        curNodes[ci].children = [leftChild, rightChild];
+      }
+      prevNodes = curNodes;
+    }
+    return prevNodes;
   }
-  // Các trận là "root" = không bị trận nào dùng làm src
-  // Nếu không có src_do/src_xanh nào cả (dữ liệu cũ), fallback về vòng cao nhất
-  let rootMatches;
+
+  // Tìm trận gốc (chung kết / final): trận không được dùng làm src của trận nào khác
   const hasSrcData = ms.some(m => m.src_do != null || m.src_xanh != null);
+  let trees;
+
   if (hasSrcData) {
-    rootMatches = ms.filter(m => !usedAsSrc.has(Number(m.STT)));
+    const usedAsSrc = new Set();
+    for (const m of ms) {
+      if (m.src_do   != null) usedAsSrc.add(Number(m.src_do));
+      if (m.src_xanh != null) usedAsSrc.add(Number(m.src_xanh));
+    }
+    let rootMatches = ms.filter(m => !usedAsSrc.has(Number(m.STT)));
     // Nếu có nhiều root, chỉ lấy vòng cao nhất (chung kết)
     if (rootMatches.length > 1) {
       const maxOrd = Math.max(...rootMatches.map(m => roundOrd(m.Loai_Tran)));
       rootMatches = rootMatches.filter(m => roundOrd(m.Loai_Tran) === maxOrd);
     }
+    trees = rootMatches.map(m => buildNode(m));
   } else {
-    // Fallback: vòng cao nhất theo roundOrd
-    const finalOrd = roundOrds[roundOrds.length - 1];
-    rootMatches = roundMap[finalOrd];
+    // Fallback: tự suy ra cây từ round order — hiển thị đầy đủ tất cả vòng đấu
+    trees = buildTreeFromRounds();
   }
-
-  // Build one tree per root match (usually just 1 = chung kết)
-  const trees = rootMatches.map(m => buildNode(m));
 
   // ===== COMPUTE LAYOUT =====
   // Returns { height } for each node, then place(node, x, y) assigns x/y coordinates
