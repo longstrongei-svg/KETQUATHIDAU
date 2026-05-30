@@ -983,16 +983,57 @@ async function fetchAll() {
         const s = +a._san.replace('san','') - +b._san.replace('san','');
         return s||Number(a.STT)-Number(b.STT);
       });
-      // Dedup toàn bộ flat theo STT+list_name: giữ bản ghi MỚI NHẤT (pushKey lớn hơn = ghi sau)
+      // ── BƯỚC 1: Dedup theo san + STT + list_name (normalize) ──────────────────
+      // Normalize list_name: bỏ dấu cách thừa, lowercase để tránh lệch key
+      // do Python encode tên nhóm khác nhau (dấu cách, viết hoa, ký tự đặc biệt)
+      function normList(s) {
+        return (s||'default').trim().toLowerCase().replace(/\s+/g,' ');
+      }
       const dedupFlat = {};
       for (const r of flat) {
-        const dk = `${r.list_name||'default'}__${r.STT}`;
+        // Key chính: normalize list_name + STT (trong cùng 1 sân)
+        const dk = `${r._san}__${normList(r.list_name)}__${r.STT}`;
         const ex = dedupFlat[dk];
         if (!ex) { dedupFlat[dk] = r; continue; }
-        // Firebase push key là chuỗi sortable theo thời gian — lớn hơn = mới hơn
+        // Ưu tiên 1: bản có winner_name thắng bản chưa có kết quả
+        const rHasWin = !!(r.winner_name), exHasWin = !!(ex.winner_name);
+        if (rHasWin && !exHasWin) { dedupFlat[dk] = r; continue; }
+        if (!rHasWin && exHasWin) continue;
+        // Ưu tiên 2: cùng trạng thái → ts mới hơn thắng
+        if ((r.ts||0) > (ex.ts||0)) { dedupFlat[dk] = r; continue; }
+        // Ưu tiên 3: ts bằng nhau → pushKey lớn hơn (ghi sau) thắng
         if (r._pushKey > ex._pushKey) dedupFlat[dk] = r;
       }
-      const dedupedFlat = Object.values(dedupFlat);
+
+      // ── BƯỚC 2: Dedup trong cùng sân theo san + STT (bỏ qua list_name) ──────
+      // Đây là fix chính: khi Python push danh sách ban đầu dùng list_name="N1"
+      // nhưng khi declare_winner push lại dùng list_name="48kg Nam N1" (hoặc ngược lại),
+      // Firebase sẽ có 2 node khác nhau dù cùng 1 trận → HTML hiện 2 dòng.
+      // Giải pháp: trong cùng 1 sân, cùng STT = cùng 1 trận, chỉ giữ 1 bản.
+      const sanSttDed = {};
+      for (const r of Object.values(dedupFlat)) {
+        const sk = `${r._san}__${r.STT}`;
+        const ex = sanSttDed[sk];
+        if (!ex) { sanSttDed[sk] = r; continue; }
+        const rHasWin = !!(r.winner_name), exHasWin = !!(ex.winner_name);
+        if (rHasWin && !exHasWin) { sanSttDed[sk] = r; continue; }
+        if (!rHasWin && exHasWin) continue;
+        if ((r.ts||0) > (ex.ts||0)) { sanSttDed[sk] = r; continue; }
+        if (r._pushKey > ex._pushKey) sanSttDed[sk] = r;
+      }
+
+      // ── BƯỚC 3: Dedup cross-san — cùng trận nhưng 2 sân cùng push ─────────
+      const crossDed = {};
+      for (const r of Object.values(sanSttDed)) {
+        const ck = `${normList(r.list_name)}__${r.STT}`;
+        const ex = crossDed[ck];
+        if (!ex) { crossDed[ck] = r; continue; }
+        const rHasWin = !!(r.winner_name), exHasWin = !!(ex.winner_name);
+        if (rHasWin && !exHasWin) { crossDed[ck] = r; continue; }
+        if (!rHasWin && exHasWin) continue;
+        if ((r.ts||0) > (ex.ts||0)) { crossDed[ck] = r; }
+      }
+      const dedupedFlat = Object.values(crossDed);
       const nk = new Set(dedupedFlat.map(r=>r._key));
       const newCombat = prevC.size>0 ? dedupedFlat.filter(r=>!prevC.has(r._key)) : [];
       newCombatKeys = new Set(newCombat.map(r=>r._key));
