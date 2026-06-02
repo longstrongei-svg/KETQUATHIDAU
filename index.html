@@ -814,6 +814,7 @@ const POLL = 5000;
 // STATE
 // ════════════════════════════════════════════════
 let combatData   = [];   // tất cả trận
+let drawModesData = {}; // hang_can → "tranh34"|"dong_auto"  (từ Firebase node draw_modes)
 let perfMedals   = [];   // huy chương hội diễn
 let summaryRows  = [];   // tổng sắp
 
@@ -983,6 +984,24 @@ async function fetchAll() {
         const s = +a._san.replace('san','') - +b._san.replace('san','');
         return s||Number(a.STT)-Number(b.STT);
       });
+      // ── BƯỚC 0: Pre-dedup theo san + STT (bất kể list_name / tran_key) ────────
+      // Fix lỗi Sân 2: khi Python push danh sách ban đầu và declare_winner push lại
+      // với tran_key khác nhau (do list_name bị encode khác nhau), Firebase có 2 node
+      // khác nhau cho cùng 1 trận. Bước này gom chúng lại TRƯỚC khi phân tích list_name.
+      // Ưu tiên: có winner_name > ts mới hơn > pushKey lớn hơn.
+      const preDed = {};
+      for (const r of flat) {
+        const pk = `${r._san}__${r.STT}`;
+        const ex = preDed[pk];
+        if (!ex) { preDed[pk] = r; continue; }
+        const rHasWin = !!(r.winner_name), exHasWin = !!(ex.winner_name);
+        if (rHasWin && !exHasWin) { preDed[pk] = r; continue; }
+        if (!rHasWin && exHasWin) continue;
+        if ((r.ts||0) > (ex.ts||0)) { preDed[pk] = r; continue; }
+        if (r._pushKey > ex._pushKey) preDed[pk] = r;
+      }
+      const flatDed = Object.values(preDed);
+
       // ── BƯỚC 1: Dedup theo san + STT + list_name (normalize) ──────────────────
       // Normalize list_name: bỏ dấu cách thừa, lowercase để tránh lệch key
       // do Python encode tên nhóm khác nhau (dấu cách, viết hoa, ký tự đặc biệt)
@@ -990,7 +1009,7 @@ async function fetchAll() {
         return (s||'default').trim().toLowerCase().replace(/\s+/g,' ');
       }
       const dedupFlat = {};
-      for (const r of flat) {
+      for (const r of flatDed) {
         // Key chính: normalize list_name + STT (trong cùng 1 sân)
         const dk = `${r._san}__${normList(r.list_name)}__${r.STT}`;
         const ex = dedupFlat[dk];
@@ -1142,6 +1161,14 @@ async function fetchAll() {
         const nm = await r4.json();
         if (nm && typeof nm === 'string' && nm.trim()) setTournamentName(nm.trim());
       }
+      // Fetch draw_modes: hang_can → "tranh34"|"dong_auto"
+      try {
+        const r5 = await fetchWithTimeout(`${FB}/draw_modes.json`);
+        if (r5.ok) {
+          const dm = await r5.json();
+          if (dm && typeof dm === 'object') drawModesData = dm;
+        }
+      } catch(e) { /* bỏ qua nếu node chưa có */ }
     } catch(e) { /* bỏ qua lỗi mạng */ }
     // Luôn cập nhật stats tổng quan sau khi fetch xong
     updateOverviewStats();
@@ -1272,25 +1299,69 @@ function rCombatMedal() {
   }
   const dedupedData = Object.values(dedupMap);
 
-  // Huy chương đối kháng: Vàng/Bạc từ Chung kết, Đồng từ người THẮNG trận Tranh 3-4
+  // Huy chương đối kháng: Vàng/Bạc từ Chung kết, Đồng tuỳ thể thức
+  // draw_mode "tranh34": Đồng = người THẮNG Tranh 3-4 (≥4 VĐV) hoặc người THUA BK duy nhất (3 VĐV)
+  // draw_mode "dong_auto": Đồng = MỌI VĐV thua Bán kết bất kỳ (không có Tranh 3-4)
+
+  // Pre-compute per hạng cân: có Tranh 3-4 không, draw_mode là gì
+  const hcHasTranh34  = {};  // hang_can → true/false
+  const hcDrawMode    = {};  // hang_can → "tranh34"|"dong_auto"
+  const hcBanketList  = {};  // hang_can → [match, ...]
+  for (const r of dedupedData) {
+    if (fCM!=='all' && r._san!==fCM) continue;
+    const hc   = r.Hang_can || '';
+    const loai = (r.Loai_Tran||'').toLowerCase().trim();
+    if (loai.includes('tranh') && loai.includes('3')) hcHasTranh34[hc] = true;
+    if (loai==='bán kết' || loai==='ban ket' || loai==='banket') {
+      if (!hcBanketList[hc]) hcBanketList[hc] = [];
+      hcBanketList[hc].push(r);
+    }
+    // Ghi nhận draw_mode từ Firebase node draw_modes (ưu tiên) → field trên match (fallback)
+    if (hc && !hcDrawMode[hc]) {
+      const _dm = drawModesData[hc] || r.draw_mode || '';
+      if (_dm === 'tranh34' || _dm === 'dong_auto') hcDrawMode[hc] = _dm;
+    }
+  }
+
   const grouped = {};
   for (const r of dedupedData) {
     if (fCM!=='all' && r._san!==fCM) continue;
-    const key = r.Hang_can || '';
+    const key  = r.Hang_can || '';
     if (!grouped[key]) grouped[key] = { nhomtuoi: key, items:[] };
     const loai = (r.Loai_Tran||'').toLowerCase().trim();
+    const dm   = hcDrawMode[key] || 'tranh34';
 
+    // ── Chung kết → Vàng + Bạc ──
     if (r.winner_name && loai === 'chung kết') {
       const winner = r.winner_team==='red' ? {ten:r.Ten_Do,donvi:r.Donvi_Do} : {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh};
       const loser  = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
       grouped[key].items.push({ medal:'Vàng', ten:winner.ten||r.winner_name, donvi:winner.donvi||r.winner_unit||'', san:r._san });
       grouped[key].items.push({ medal:'Bạc',  ten:loser.ten||'—', donvi:loser.donvi||'', san:r._san });
     }
-    // Đồng: chỉ trao cho người THẮNG trận Tranh 3-4
+    // ── Tranh 3-4 → người THẮNG được Đồng ──
     if (r.winner_name && loai.includes('tranh') && loai.includes('3')) {
       const winner = r.winner_team==='red' ? {ten:r.Ten_Do,donvi:r.Donvi_Do} : {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh};
       grouped[key].items.push({ medal:'Đồng', ten:winner.ten||'—', donvi:winner.donvi||'', san:r._san });
     }
+    // ── Bán kết: dong_auto → người THUA được Đồng ngay ──
+    if (r.winner_name && dm==='dong_auto' &&
+        (loai==='bán kết' || loai==='ban ket' || loai==='banket')) {
+      const loser = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+      grouped[key].items.push({ medal:'Đồng', ten:loser.ten||'—', donvi:loser.donvi||'', san:r._san });
+    }
+  }
+  // ── Bracket 3 VĐV (tranh34 + 1 BK duy nhất, không có Tranh 3-4) ──
+  // Áp dụng sau vòng lặp vì cần biết tổng số BK của hạng cân
+  for (const [hc, bkList] of Object.entries(hcBanketList)) {
+    const dm = hcDrawMode[hc] || 'tranh34';
+    if (dm !== 'tranh34') continue;           // dong_auto đã xử lý trong vòng lặp trên
+    if (hcHasTranh34[hc]) continue;           // có Tranh 3-4 → đã trao Đồng cho người thắng
+    if (bkList.length !== 1) continue;        // ≥2 BK mà tranh34 → đang chờ Tranh 3-4
+    const bk    = bkList[0];
+    if (!bk.winner_name) continue;
+    const loser = bk.winner_team==='red' ? {ten:bk.Ten_Xanh,donvi:bk.Donvi_Xanh} : {ten:bk.Ten_Do,donvi:bk.Donvi_Do};
+    if (!grouped[hc]) grouped[hc] = { nhomtuoi: hc, items:[] };
+    grouped[hc].items.push({ medal:'Đồng', ten:loser.ten||'—', donvi:loser.donvi||'', san:bk._san });
   }
 
   const allMedals = Object.values(grouped).flatMap(g=>g.items);
@@ -1517,19 +1588,58 @@ function buildSummaryFromData() {
     const sn = +r._san.replace('san',''), se = +ex._san.replace('san','');
     if (sn < se) _dedup[dk] = r;
   }
+  // Pre-compute per hạng cân: Tranh 3-4, danh sách BK, draw_mode
+  const hcTranh34    = new Set();
+  const banketMap    = {};   // hang_can → [match, ...]
+  const hcDrawMode2  = {};   // hang_can → "tranh34"|"dong_auto"
   for (const r of Object.values(_dedup)) {
     const loai = (r.Loai_Tran||'').toLowerCase().trim();
+    const hc   = r.Hang_can || '';
+    if (loai.includes('tranh') && loai.includes('3')) hcTranh34.add(hc);
+    if (loai==='bán kết' || loai==='ban ket' || loai==='banket') {
+      if (!banketMap[hc]) banketMap[hc] = [];
+      banketMap[hc].push(r);
+    }
+    if (hc && !hcDrawMode2[hc]) {
+      const _dm2 = drawModesData[hc] || r.draw_mode || '';
+      if (_dm2 === 'tranh34' || _dm2 === 'dong_auto') hcDrawMode2[hc] = _dm2;
+    }
+  }
+
+  for (const r of Object.values(_dedup)) {
+    const loai = (r.Loai_Tran||'').toLowerCase().trim();
+    const hc   = r.Hang_can || '';
+    const dm   = hcDrawMode2[hc] || 'tranh34';
+
+    // Chung kết → Vàng + Bạc
     if (loai === 'chung kết') {
       const winner = r.winner_team==='red' ? r.Donvi_Do : r.Donvi_Xanh;
       const loser  = r.winner_team==='red' ? r.Donvi_Xanh : r.Donvi_Do;
       if (winner) { ensure(winner); medalCount[winner].vang++; }
       if (loser)  { ensure(loser);  medalCount[loser].bac++; }
     }
-    // Đồng: chỉ trao cho người THẮNG trận Tranh 3-4
+    // Tranh 3-4 → người THẮNG được Đồng
     if (loai.includes('tranh') && loai.includes('3')) {
       const winner = r.winner_team==='red' ? r.Donvi_Do : r.Donvi_Xanh;
       if (winner) { ensure(winner); medalCount[winner].dong++; }
     }
+    // Bán kết + dong_auto → người THUA ngay lập tức được Đồng
+    if (dm==='dong_auto' && (loai==='bán kết' || loai==='ban ket' || loai==='banket')) {
+      const loser = r.winner_team==='red' ? r.Donvi_Xanh : r.Donvi_Do;
+      if (loser) { ensure(loser); medalCount[loser].dong++; }
+    }
+  }
+  // Bracket 3 VĐV (tranh34 + chỉ 1 BK duy nhất, không có Tranh 3-4):
+  // người THUA BK duy nhất = HC Đồng
+  for (const [hc, bkList] of Object.entries(banketMap)) {
+    const dm = hcDrawMode2[hc] || 'tranh34';
+    if (dm !== 'tranh34') continue;        // dong_auto đã xử lý trên
+    if (hcTranh34.has(hc)) continue;       // có Tranh 3-4 → đã trao ở vòng trên
+    if (bkList.length !== 1) continue;     // ≥2 BK + tranh34 → đang chờ Tranh 3-4
+    const bk    = bkList[0];
+    if (!bk.winner_name) continue;
+    const loser = bk.winner_team==='red' ? bk.Donvi_Xanh : bk.Donvi_Do;
+    if (loser) { ensure(loser); medalCount[loser].dong++; }
   }
 
   // --- Hội diễn ---
@@ -2258,6 +2368,8 @@ function showDonviMedals(donvi) {
     const _sn = +r._san.replace('san',''), _se = +_ex._san.replace('san','');
     if (_sn < _se) { _dedupPopup[_dk] = r; }
   }
+  const _popupTranh34 = new Set();
+  const _popupBanket  = {};
   for (const r of Object.values(_dedupPopup)) {
     const key = r.Hang_can || '';
     const loaiTran = (r.Loai_Tran||'').toLowerCase().trim();
@@ -2267,10 +2379,24 @@ function showDonviMedals(donvi) {
       if ((winner.donvi||'') === donvi) combatMedals.push({medal:'Vàng', ten:winner.ten||'', noidung:key, loai:'⚔️ Đối kháng'});
       if ((loser.donvi||'')  === donvi) combatMedals.push({medal:'Bạc',  ten:loser.ten||'',  noidung:key, loai:'⚔️ Đối kháng'});
     }
-    // Đồng: chỉ trao cho người THẮNG trận Tranh 3-4
+    // Đồng: người THẮNG Tranh 3-4 (bracket ≥ 4 VĐV)
     if (r.winner_name && loaiTran.includes('tranh') && loaiTran.includes('3')) {
       const winner = r.winner_team==='red' ? {ten:r.Ten_Do,donvi:r.Donvi_Do} : {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh};
       if ((winner.donvi||'') === donvi) combatMedals.push({medal:'Đồng', ten:winner.ten||'', noidung:key, loai:'⚔️ Đối kháng'});
+      _popupTranh34.add(key);
+    }
+    // Gom bán kết để xét bracket 3 VĐV sau
+    if (loaiTran==='bán kết' || loaiTran==='ban ket' || loaiTran==='banket') {
+      if (!_popupBanket[key]) _popupBanket[key] = [];
+      _popupBanket[key].push(r);
+    }
+  }
+  // Bracket 3 VĐV: không có Tranh 3-4, chỉ 1 Bán kết → người THUA = HC Đồng
+  for (const [hc, bkList] of Object.entries(_popupBanket)) {
+    if (!_popupTranh34.has(hc) && bkList.length === 1) {
+      const bk = bkList[0];
+      const loser = bk.winner_team==='red' ? {ten:bk.Ten_Xanh,donvi:bk.Donvi_Xanh} : {ten:bk.Ten_Do,donvi:bk.Donvi_Do};
+      if ((loser.donvi||'') === donvi) combatMedals.push({medal:'Đồng', ten:loser.ten||'', noidung:hc, loai:'⚔️ Đối kháng'});
     }
   }
 
