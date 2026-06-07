@@ -1,1 +1,2464 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📋 Kết quả thi đấu – Thư ký</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1e293b;min-height:100vh}
 
+    /* ── HEADER ── */
+    header{background:linear-gradient(135deg,#1d4ed8,#2563eb,#0ea5e9);
+      padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+      box-shadow:0 2px 12px rgba(37,99,235,.3)}
+    header h1{font-size:20px;color:#fff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.2)}
+    .live-dot{display:flex;align-items:center;gap:6px;font-size:13px;color:#a7f3d0}
+    .live-dot .dot{width:9px;height:9px;border-radius:50%;background:#34d399;animation:pulse 1.5s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+    .last-update{font-size:12px;color:#bfdbfe;margin-top:2px}
+
+    /* ── MAIN TABS ── */
+    .main-tabs{display:flex;background:#fff;border-bottom:2px solid #e2e8f0;padding:0 20px;overflow-x:auto;
+      box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .main-tab{padding:12px 20px;cursor:pointer;font-size:14px;font-weight:600;color:#64748b;white-space:nowrap;
+      border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s}
+    .main-tab.active{color:#2563eb;border-bottom-color:#2563eb}
+    .main-tab:hover:not(.active){color:#3b82f6;background:#f8fafc}
+
+    /* ── CONTROLS ── */
+    .controls{background:#fff;padding:11px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      border-bottom:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+    .san-tabs{display:flex;gap:5px;flex-wrap:wrap}
+    .san-btn{padding:5px 14px;border:1px solid #cbd5e1;border-radius:20px;background:#fff;color:#64748b;cursor:pointer;font-size:13px;transition:all .2s}
+    .san-btn.active{background:#2563eb;border-color:#2563eb;color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(37,99,235,.3)}
+    .san-btn:hover:not(.active){border-color:#93c5fd;color:#2563eb;background:#eff6ff}
+    .search-box{flex:1;max-width:260px;padding:6px 14px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:20px;color:#1e293b;font-size:13px;outline:none}
+    .search-box::placeholder{color:#94a3b8}
+    .search-box:focus{border-color:#3b82f6;background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+    .stats-row{display:flex;gap:8px;margin-left:auto}
+    .chip{padding:4px 11px;border-radius:12px;font-size:12px;font-weight:600}
+    .chip-g{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0}
+    .chip-b{background:#dbeafe;color:#2563eb;border:1px solid #bfdbfe}
+
+    /* ── TABLE ── */
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .tbl-wrap{padding:16px 24px;overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:14px;min-width:900px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+    thead th{background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;padding:10px 13px;text-align:left;font-weight:600;
+      font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+    tbody tr{border-bottom:1px solid #f1f5f9;transition:background .12s}
+    tbody tr:nth-child(even){background:#fafbfc}
+    tbody tr:hover{background:#eff6ff}
+    tbody td{padding:9px 13px;vertical-align:middle}
+
+    /* badges */
+    .badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:13px;font-weight:700;min-width:30px;text-align:center}
+    .badge-stt{background:#dbeafe;color:#2563eb}
+    .badge-san{display:inline-block;font-size:11px;padding:2px 7px;border-radius:8px;font-weight:600}
+    .san-1{background:#f3e8ff;color:#7c3aed}.san-2{background:#dbeafe;color:#1d4ed8}
+    .san-3{background:#dcfce7;color:#15803d}.san-4{background:#ffedd5;color:#c2410c}.san-5{background:#fee2e2;color:#dc2626}
+    .team-r{color:#dc2626;font-weight:600}.team-b{color:#2563eb;font-weight:600}
+    .vs{display:inline-block;background:#e2e8f0;color:#64748b;border-radius:4px;padding:1px 5px;font-size:11px;margin:0 3px}
+    .win-name{font-weight:700;color:#d97706}
+    .win-unit{font-size:12px;color:#64748b}
+    .tag-reason{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#dbeafe;color:#1d4ed8;white-space:nowrap}
+    .tag-pending{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#92400e;background:#fef3c7;padding:3px 9px;border-radius:10px;border:1px solid #fde68a}
+
+    /* medal badges */
+    .medal{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-weight:700;font-size:13px}
+    .medal-gold  {background:#fef9c3;color:#b45309;border:1px solid #fde68a}
+    .medal-silver{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+    .medal-bronze{background:#fef3e2;color:#92400e;border:1px solid #fed7aa}
+    .rank-tag{display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-size:13px;font-weight:700}
+
+    /* GROUP HEADER ROW in medal table */
+    .group-header td{background:linear-gradient(90deg,#eff6ff,#f8fafc);color:#1d4ed8;font-weight:700;font-size:13px;letter-spacing:.3px;padding:10px 13px;border-top:2px solid #bfdbfe;border-left:4px solid #2563eb}
+
+    /* summary table */
+    .rank-1{color:#b45309;font-weight:800;font-size:16px}
+    .rank-2{color:#475569;font-weight:700}
+    .rank-3{color:#92400e;font-weight:700}
+    .num-gold{color:#b45309;font-weight:700;font-size:15px}
+    .num-silver{color:#475569;font-weight:700;font-size:15px}
+    .num-bronze{color:#92400e;font-weight:700;font-size:15px}
+
+    /* empty / loading */
+    .empty{text-align:center;padding:50px 20px;color:#94a3b8}
+    .empty .ico{font-size:44px;margin-bottom:10px}
+    .loading{text-align:center;padding:50px;color:#94a3b8}
+    .spin{display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+
+    /* ── COMBAT CARD LAYOUT ── */
+    .combat-section { margin: 0 20px 24px; }
+    .combat-section-header {
+      display: flex; align-items: center; gap: 10px;
+      background: linear-gradient(90deg,#dbeafe,#eff6ff);
+      border-left: 4px solid #2563eb; border-radius: 6px 6px 0 0;
+      padding: 10px 16px; margin-bottom: 1px;
+    }
+    .combat-section-title { font-size: 13px; font-weight: 700; color: #1d4ed8; letter-spacing: .5px; text-transform: uppercase; }
+    .combat-section-count { font-size: 11px; color: #3b82f6; background: #dbeafe; padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+
+    .match-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px; margin-bottom: 4px; }
+
+    .match-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+      overflow: hidden; transition: border-color .2s, box-shadow .2s;
+    }
+    .match-card:hover { border-color: #93c5fd; box-shadow: 0 4px 16px rgba(37,99,235,.12); }
+    .match-card.has-result { border-left: 3px solid #22c55e; }
+    .match-card.no-result  { border-left: 3px solid #cbd5e1; }
+    .match-card.row-new    { border-left: 3px solid #f59e0b; animation: cardFlash 2.5s ease forwards; }
+    @keyframes cardFlash { 0%,60%{background:#fefce8;} 100%{background:#fff;} }
+
+    .match-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+      font-size: 11px;
+    }
+    .match-stt { color: #64748b; font-weight: 600; }
+    .match-type { color: #334155; font-size: 11px; }
+    .match-hang { color: #475569; font-size: 11px; }
+
+    .match-body { padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+
+    .fighter {
+      flex: 1; display: flex; flex-direction: column; gap: 3px;
+      padding: 8px 10px; border-radius: 6px; min-width: 0;
+      transition: background .2s;
+    }
+    .fighter.red  { background: #fff5f5; border: 1px solid #fecaca; }
+    .fighter.blue { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .fighter.winner { opacity: 1; }
+    .fighter.loser  { opacity: .5; }
+
+    .fighter-corner { font-size: 10px; font-weight: 700; letter-spacing: .5px; margin-bottom: 2px; }
+    .fighter.red  .fighter-corner { color: #dc2626; }
+    .fighter.blue .fighter-corner { color: #2563eb; }
+    .fighter-name { font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fighter-unit { font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fighter-crown { font-size: 14px; margin-top: 2px; }
+
+    .vs-divider { font-size: 12px; font-weight: 800; color: #94a3b8; flex-shrink: 0; }
+
+    .match-footer { padding: 6px 12px; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+    .match-result-label { font-size: 11px; }
+    .match-reason-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #dbeafe; color: #1d4ed8; }
+    .match-pending { font-size: 11px; color: #92400e; background: #fef3c7; padding: 2px 8px; border-radius: 10px; border: 1px solid #fde68a; }
+
+    /* ── SIGMA BRACKET ── */
+    .sigma-wrap { display:flex; flex-direction:column; gap:28px; }
+
+    .sigma-weight-block{
+      background:#fff;
+      border-radius:12px;
+      overflow:visible;
+      box-shadow:0 2px 10px rgba(0,0,0,.08);
+      border:1px solid #e2e8f0;
+    }
+
+    .sigma-weight-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 18px;
+      background:linear-gradient(135deg,#1d4ed8,#2563eb);
+      color:#fff;
+    }
+
+    .sigma-weight-title{font-size:14px;font-weight:700;letter-spacing:.4px}
+    .sigma-weight-meta{font-size:12px;opacity:.85}
+
+    /* QUAN TRỌNG: cho phép cả ngang + dọc */
+    .sigma-bracket-area{
+      overflow:auto;
+      padding:20px 16px 32px;
+      min-height:420px;
+      max-height:none;
+    }
+
+    /* để svg không bị co méo */
+    .sigma-bracket-area svg{
+      display:block;
+      min-width:max-content;
+    }
+
+    /* bracket tree */
+    .bracket-tree { display: flex; flex-direction: row; gap: 0; align-items: stretch; min-width: max-content; }
+    .bracket-col { display: flex; flex-direction: column; justify-content: space-around; margin-right: 0; position: relative; }
+    .bracket-col + .bracket-col { margin-left: 50px; }
+
+    .b-node-wrap { display: flex; align-items: center; position: relative; }
+    .b-node {
+      width: 200px; min-height: 54px; border-radius: 8px; padding: 8px 12px;
+      display: flex; flex-direction: column; justify-content: center;
+      position: relative; box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      transition: box-shadow .2s, transform .15s;
+      cursor: default; font-size: 13px;
+    }
+    .b-node:hover { box-shadow: 0 4px 14px rgba(0,0,0,.18); transform: translateY(-1px); }
+
+    .b-node.fighter-red  { background: #fee2e2; border: 2px solid #f87171; }
+    .b-node.fighter-blue { background: #dbeafe; border: 2px solid #60a5fa; }
+    .b-node.match-node   { background: #f0fdf4; border: 2px solid #4ade80; width: 180px; }
+    .b-node.match-node.final { background: #fef9c3; border: 2px solid #f59e0b; }
+    .b-node.match-node.resolved { background: #dcfce7; border: 2px solid #22c55e; }
+
+    .b-node-corner { font-size: 9px; font-weight: 700; letter-spacing: .6px; margin-bottom: 2px; opacity: .75; }
+    .b-node-corner.red  { color: #dc2626; }
+    .b-node-corner.blue { color: #1d4ed8; }
+    .b-node-name { font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 176px; }
+    .b-node-name.loser-name { text-decoration: line-through; color: #94a3b8; font-weight: 400; }
+    .b-node-unit { font-size: 11px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 176px; }
+    .b-node-crown { font-size: 12px; margin-left: 4px; }
+
+    .b-node-match-label { font-size: 11px; color: #64748b; margin-bottom: 3px; font-weight: 600; }
+    .b-node-match-winner { font-size: 13px; font-weight: 700; color: #15803d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .b-node-match-unit   { font-size: 11px; color: #64748b; }
+    .b-node-match-pending { font-size: 12px; color: #92400e; }
+
+    /* connector lines via SVG overlay – we use CSS border trick instead */
+    .b-connector-right {
+      position: absolute; right: -50px; top: 50%; width: 50px; height: 0;
+      border-top: 2px dashed #cbd5e1; pointer-events: none;
+    }
+    .b-connector-right.resolved { border-top-color: #22c55e; border-top-style: solid; }
+
+    .sigma-empty { text-align: center; padding: 30px; color: #94a3b8; font-size: 13px; }
+
+    /* round labels */
+    .sigma-round-labels { display: flex; gap: 0; margin-bottom: 10px; min-width: max-content; }
+    .sigma-round-label {
+      width: 200px; text-align: center; font-size: 11px; font-weight: 700;
+      color: #1d4ed8; text-transform: uppercase; letter-spacing: .5px; padding: 4px 0;
+      background: #eff6ff; border-radius: 6px; margin-right: 50px;
+    }
+    .sigma-round-label:last-child { margin-right: 0; }
+
+    /* toast */
+    .toast-box{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:999}
+    .toast{background:#fff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 15px;font-size:13px;color:#1e293b;max-width:310px;animation:tin .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+    .toast.new{border-color:#86efac;background:#f0fdf4;color:#15803d}
+    @keyframes tin{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+    /* ── POPUP HUY CHƯƠNG ĐOÀN ── */
+    .popup-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s ease}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .popup-box{background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);width:100%;max-width:680px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+    .popup-header{background:linear-gradient(135deg,#1d4ed8,#2563eb);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .popup-title{color:#fff;font-size:16px;font-weight:700}
+    .popup-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+    .popup-close:hover{background:rgba(255,255,255,.35)}
+    .popup-stats{display:flex;gap:10px;padding:12px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0}
+    .popup-chip{padding:4px 12px;border-radius:12px;font-size:13px;font-weight:700}
+    .popup-body{overflow-y:auto;padding:16px 20px;flex:1}
+    .popup-group{margin-bottom:14px}
+    .popup-group-title{font-size:12px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.4px;padding:6px 10px;background:#eff6ff;border-left:3px solid #2563eb;border-radius:0 6px 6px 0;margin-bottom:6px}
+    .popup-medal-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;margin-bottom:4px;background:#fafbfc;border:1px solid #f1f5f9}
+    .popup-medal-row:hover{background:#eff6ff;border-color:#bfdbfe}
+    .popup-noidung{font-size:13px;color:#334155;flex:1}
+    .summary-row-click{cursor:pointer;transition:background .15s}
+    .summary-row-click:hover td{background:#eff6ff!important}
+    .summary-row-click td:nth-child(2){text-decoration:underline;text-decoration-color:#93c5fd;text-underline-offset:3px}
+
+    /* ══════════════════════════════════════
+       TRANG TỔNG QUAN – BRIGHT LIGHT THEME
+    ══════════════════════════════════════ */
+    @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap');
+
+    #tab-overview {
+      min-height: calc(100vh - 112px);
+      background: linear-gradient(160deg, #e8f4fd 0%, #f0f7ff 35%, #fef9ec 70%, #fff5f7 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Soft decorative circles */
+    #tab-overview::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59,130,246,0.10) 0%, transparent 70%);
+      top: -200px; right: -150px;
+      pointer-events: none;
+    }
+    #tab-overview::after {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(251,146,60,0.10) 0%, transparent 70%);
+      bottom: -150px; left: -100px;
+      pointer-events: none;
+    }
+
+    /* Floating blobs */
+    .ov-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+      animation: orbFloat 9s ease-in-out infinite;
+    }
+    .ov-orb-1 {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, rgba(99,179,255,0.22), transparent 65%);
+      top: -80px; left: -60px;
+      animation-delay: 0s;
+    }
+    .ov-orb-2 {
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(251,191,36,0.20), transparent 65%);
+      bottom: 40px; right: -40px;
+      animation-delay: -5s;
+    }
+    .ov-orb-3 {
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, rgba(52,211,153,0.16), transparent 65%);
+      top: 55%; left: 55%;
+      animation-delay: -2.5s;
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50%       { transform: translateY(-24px) scale(1.04); }
+    }
+
+    .ov-content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 44px 24px 56px;
+      min-height: calc(100vh - 112px);
+    }
+
+    /* Emblem */
+    .ov-emblem {
+      width: 100px; height: 100px;
+      background: linear-gradient(135deg, #dbeafe, #eff6ff);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 30px rgba(37,99,235,0.22), 0 0 0 6px rgba(37,99,235,0.10);
+      margin-bottom: 24px;
+      animation: emblemPop 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
+      border: 2px solid #bfdbfe;
+    }
+    @keyframes emblemPop {
+      from { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0deg);     opacity: 1; }
+    }
+
+    /* Badges */
+    .ov-badge-row {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 14px;
+      animation: fadeUp 0.5s 0.2s both;
+    }
+    .ov-badge {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.8px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+    .ov-badge-live {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ov-badge-live .live-dot-sm {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 1.5s infinite;
+    }
+    .ov-badge-sport {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border: 1px solid #93c5fd;
+    }
+
+    /* Tên giải */
+    .ov-title {
+      font-family: 'Teko', sans-serif;
+      font-size: clamp(34px, 6vw, 68px);
+      font-weight: 700;
+      color: #0f172a;
+      text-align: center;
+      line-height: 1.05;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      animation: fadeUp 0.6s 0.3s both;
+    }
+    .ov-title span {
+      background: linear-gradient(120deg, #2563eb 0%, #0ea5e9 45%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .ov-subtitle {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 14px; font-weight: 400;
+      color: #64748b;
+      margin-bottom: 40px;
+      letter-spacing: 0.2px;
+      animation: fadeUp 0.6s 0.4s both;
+    }
+
+    @keyframes fadeUp {
+      from { transform: translateY(18px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* Stats row */
+    .ov-stats {
+      display: flex; gap: 14px; margin-bottom: 44px;
+      flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.6s 0.5s both;
+    }
+    .ov-stat {
+      text-align: center;
+      padding: 14px 22px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      min-width: 88px;
+    }
+    .ov-stat-num {
+      font-family: 'Teko', sans-serif;
+      font-size: 30px; font-weight: 600;
+      color: #2563eb;
+      line-height: 1;
+    }
+    .ov-stat-lbl {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.6px;
+      color: #94a3b8;
+      margin-top: 3px;
+      text-transform: uppercase;
+    }
+
+    /* Divider */
+    .ov-divider {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 20px;
+      animation: fadeUp 0.6s 0.55s both;
+    }
+
+    /* Grid 6 nút */
+    .ov-nav-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      max-width: 780px;
+      width: 100%;
+      animation: fadeUp 0.7s 0.6s both;
+    }
+    @media (max-width: 620px) {
+      .ov-nav-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+    @media (max-width: 380px) {
+      .ov-nav-grid { grid-template-columns: 1fr; }
+    }
+
+    .ov-nav-btn {
+      position: relative;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 9px;
+      padding: 22px 16px 18px;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 18px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      text-decoration: none;
+    }
+    .ov-nav-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 14px 36px rgba(0,0,0,0.12);
+    }
+    .ov-nav-btn:active { transform: translateY(-2px); }
+
+    /* Màu riêng mỗi nút khi hover */
+    .ov-nav-btn[data-color="amber"]:hover  { border-color: #fbbf24; background: #fffbeb; box-shadow: 0 14px 36px rgba(245,158,11,0.18); }
+    .ov-nav-btn[data-color="blue"]:hover   { border-color: #60a5fa; background: #eff6ff; box-shadow: 0 14px 36px rgba(37,99,235,0.16); }
+    .ov-nav-btn[data-color="gold"]:hover   { border-color: #fcd34d; background: #fefce8; box-shadow: 0 14px 36px rgba(234,179,8,0.18); }
+    .ov-nav-btn[data-color="green"]:hover  { border-color: #4ade80; background: #f0fdf4; box-shadow: 0 14px 36px rgba(34,197,94,0.16); }
+    .ov-nav-btn[data-color="teal"]:hover   { border-color: #2dd4bf; background: #f0fdfa; box-shadow: 0 14px 36px rgba(20,184,166,0.16); }
+    .ov-nav-btn[data-color="purple"]:hover { border-color: #a78bfa; background: #f5f3ff; box-shadow: 0 14px 36px rgba(139,92,246,0.16); }
+
+    .ov-nav-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .ov-nav-label {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 13px; font-weight: 700;
+      color: #1e293b;
+      line-height: 1.35;
+    }
+
+    .ov-nav-desc {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-size: 11px; font-weight: 400;
+      color: #94a3b8;
+      line-height: 1.3;
+    }
+
+    /* Tab overview */
+    .main-tab.overview-tab {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .main-tab.overview-tab .ov-home-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: currentColor;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1 id="headerTitle">📋 Kết quả thi đấu – Thư ký</h1>
+  <div style="text-align:right">
+    <div class="live-dot" id="liveStatus"><div class="dot"></div><span>Đang theo dõi</span></div>
+    <div class="last-update" id="lastUpdate">Chưa cập nhật</div>
+  </div>
+</header>
+
+<!-- MAIN TABS -->
+<div class="main-tabs">
+  <div class="main-tab overview-tab active" onclick="switchTab('overview',this)"><span class="ov-home-dot"></span>🏠 Tổng quan</div>
+  <div class="main-tab"  onclick="switchTab('sigma',this)">🏆 Sigma Đối kháng</div>
+  <div class="main-tab"  onclick="switchTab('combat',this)">⚔️ Danh sách trận Đối kháng</div>
+  <div class="main-tab"  onclick="switchTab('combat-medal',this)">🥊 Huy chương Đối kháng</div>
+  <div class="main-tab"  onclick="switchTab('perf-result',this)">🎽 Hội diễn</div>
+  <div class="main-tab"  onclick="switchTab('perf-medal',this)">🏅 Huy chương Hội diễn</div>
+  <div class="main-tab"  onclick="switchTab('summary',this)">🏆 Tổng sắp</div>
+</div>
+
+<!-- ══════════════════ TAB TỔNG QUAN ══════════════════ -->
+<div id="tab-overview" class="tab-content active">
+  <div class="ov-orb ov-orb-1"></div>
+  <div class="ov-orb ov-orb-2"></div>
+  <div class="ov-orb ov-orb-3"></div>
+  <div class="ov-content">
+
+    <!-- Hình võ phục Vovinam: áo xanh blue, đai vàng -->
+    <div class="ov-emblem">
+      <svg viewBox="0 0 80 80" width="56" height="56" xmlns="http://www.w3.org/2000/svg" style="display:block">
+        <!-- Đầu -->
+        <ellipse cx="40" cy="13" rx="9" ry="10" fill="#f5cba7"/>
+        <!-- Cổ -->
+        <rect x="36" y="22" width="8" height="5" rx="2" fill="#f5cba7"/>
+        <!-- Thân áo (xanh blue Vovinam) -->
+        <path d="M22 27 Q26 24 36 26 L40 34 L44 26 Q54 24 58 27 L62 50 L18 50 Z" fill="#1a56db"/>
+        <!-- Cổ áo trái -->
+        <path d="M36 26 L34 36 L40 34 Z" fill="#1240a4"/>
+        <!-- Cổ áo phải -->
+        <path d="M44 26 L46 36 L40 34 Z" fill="#1240a4"/>
+        <!-- Tay trái (xanh) -->
+        <path d="M22 27 L14 42 Q13 46 16 47 L24 34" fill="#1a56db"/>
+        <!-- Tay phải (xanh) -->
+        <path d="M58 27 L66 42 Q67 46 64 47 L56 34" fill="#1a56db"/>
+        <!-- Bàn tay trái -->
+        <ellipse cx="15" cy="47" rx="4" ry="3" fill="#f5cba7"/>
+        <!-- Bàn tay phải -->
+        <ellipse cx="65" cy="47" rx="4" ry="3" fill="#f5cba7"/>
+        <!-- ĐAI VÀNG -->
+        <rect x="18" y="48" width="44" height="5" rx="2" fill="#f6c000"/>
+        <!-- Nút thắt đai (màu vàng đậm) -->
+        <rect x="36" y="47" width="8" height="7" rx="1.5" fill="#d4a000"/>
+        <!-- Quần (xanh đậm) -->
+        <path d="M18 53 L24 70 L36 70 L40 58 L44 70 L56 70 L62 53 Z" fill="#1240a4"/>
+        <!-- Đường giữa quần -->
+        <line x1="40" y1="53" x2="40" y2="70" stroke="#0d3080" stroke-width="1"/>
+        <!-- Chân trái -->
+        <rect x="22" y="70" width="12" height="5" rx="2" fill="#1240a4"/>
+        <!-- Chân phải -->
+        <rect x="46" y="70" width="12" height="5" rx="2" fill="#1240a4"/>
+      </svg>
+    </div>
+
+    <div class="ov-badge-row">
+      <div class="ov-badge ov-badge-live">
+        <div class="live-dot-sm"></div>
+        <span>Trực tiếp</span>
+      </div>
+      <div class="ov-badge ov-badge-sport">Vovinam</div>
+    </div>
+
+    <div class="ov-title" id="ovTitleMain">
+      <span id="ovTitleText">Giải đấu Vovinam</span>
+    </div>
+
+    <div class="ov-subtitle" id="ovSubtitle">Hệ thống theo dõi kết quả thi đấu</div>
+
+    <!-- Thống kê nhanh -->
+    <div class="ov-stats">
+      <div class="ov-stat">
+        <div class="ov-stat-num" id="ovStatTran">—</div>
+        <div class="ov-stat-lbl">Trận đấu Đối kháng</div>
+      </div>
+      <div class="ov-stat">
+        <div class="ov-stat-num" id="ovStatKQ">—</div>
+        <div class="ov-stat-lbl">Có kết quả</div>
+      </div>
+      <div class="ov-stat">
+        <div class="ov-stat-num" id="ovStatVDV">—</div>
+        <div class="ov-stat-lbl">Bài Hội diễn</div>
+      </div>
+      <div class="ov-stat">
+        <div class="ov-stat-num" id="ovStatDonVi">—</div>
+        <div class="ov-stat-lbl">Đơn vị</div>
+      </div>
+    </div>
+
+    <div class="ov-divider">— Chọn mục xem —</div>
+
+    <!-- 6 nút điều hướng -->
+    <div class="ov-nav-grid">
+
+      <div class="ov-nav-btn" data-color="amber" onclick="navTo('sigma')">
+        <div class="ov-nav-icon">🏆</div>
+        <div class="ov-nav-label">Sigma<br>Đối kháng</div>
+        <div class="ov-nav-desc">Cây nhánh thi đấu loại trực tiếp</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="blue" onclick="navTo('combat')">
+        <div class="ov-nav-icon">⚔️</div>
+        <div class="ov-nav-label">Danh sách trận<br>Đối kháng</div>
+        <div class="ov-nav-desc">Toàn bộ trận đấu & kết quả</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="gold" onclick="navTo('combat-medal')">
+        <div class="ov-nav-icon">🥇</div>
+        <div class="ov-nav-label">Huy chương<br>Đối kháng</div>
+        <div class="ov-nav-desc">Vàng · Bạc · Đồng theo hạng cân</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="green" onclick="navTo('perf-result')">
+        <div class="ov-nav-icon">🎽</div>
+        <div class="ov-nav-label">Hội diễn</div>
+        <div class="ov-nav-desc">Kết quả & điểm số biểu diễn quyền</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="teal" onclick="navTo('perf-medal')">
+        <div class="ov-nav-icon">🏅</div>
+        <div class="ov-nav-label">Huy chương<br>Hội diễn</div>
+        <div class="ov-nav-desc">Xếp hạng huy chương biểu diễn</div>
+      </div>
+
+      <div class="ov-nav-btn" data-color="purple" onclick="navTo('summary')">
+        <div class="ov-nav-icon">📊</div>
+        <div class="ov-nav-label">Tổng sắp</div>
+        <div class="ov-nav-desc">Bảng xếp hạng huy chương đơn vị</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB 1: ĐỐI KHÁNG ══════════════════ -->
+<div id="tab-combat" class="tab-content">
+  <div class="controls">
+    <div class="san-tabs" id="sanC">
+      <button class="san-btn active" onclick="fSan('c','all',this)">🏟️ Tất cả</button>
+      <button class="san-btn" onclick="fSan('c','san1',this)">Sân 1</button>
+      <button class="san-btn" onclick="fSan('c','san2',this)">Sân 2</button>
+      <button class="san-btn" onclick="fSan('c','san3',this)">Sân 3</button>
+      <button class="san-btn" onclick="fSan('c','san4',this)">Sân 4</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <span style="font-size:12px;color:#475569;white-space:nowrap">📋 Danh sách:</span>
+      <select id="listFilter" onchange="rCombat()"
+        style="background:#fff;border:1px solid #cbd5e1;border-radius:16px;color:#1e293b;
+               font-size:12px;padding:4px 10px;outline:none;cursor:pointer">
+        <option value="all">Tất cả</option>
+      </select>
+    </div>
+    <input class="search-box" id="qC" type="text" placeholder="🔍 Tên VĐV, đơn vị..." oninput="rCombat()">
+    <div class="stats-row">
+      <div class="chip chip-g" id="cDone">✅ 0 có KQ</div>
+      <div class="chip chip-b" id="cTotal">📊 0 trận</div>
+    </div>
+  </div>
+  <div class="tbl-wrap" id="wCombat"><div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div></div>
+</div>
+
+<!-- ══════════════════ TAB SIGMA ĐỐI KHÁNG ══════════════════ -->
+<div id="tab-sigma" class="tab-content">
+  <div class="controls">
+    <div class="san-tabs" id="sanSigma">
+      <button class="san-btn active" onclick="fSan('sigma','all',this)">🏟️ Tất cả sân</button>
+      <button class="san-btn" onclick="fSan('sigma','san1',this)">Sân 1</button>
+      <button class="san-btn" onclick="fSan('sigma','san2',this)">Sân 2</button>
+      <button class="san-btn" onclick="fSan('sigma','san3',this)">Sân 3</button>
+      <button class="san-btn" onclick="fSan('sigma','san4',this)">Sân 4</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <span style="font-size:12px;color:#475569;white-space:nowrap">🏋️ Hạng cân:</span>
+      <select id="sigmaWeightFilter" onchange="rSigma()"
+        style="background:#fff;border:1px solid #cbd5e1;border-radius:16px;color:#1e293b;
+               font-size:12px;padding:4px 10px;outline:none;cursor:pointer;min-width:130px">
+        <option value="all">Tất cả</option>
+      </select>
+    </div>
+    <div class="stats-row">
+      <div class="chip chip-g" id="sigmaTotal">📊 0 hạng cân</div>
+      <div class="chip chip-b" id="sigmaDone">✅ 0 có KQ</div>
+    </div>
+  </div>
+  <div id="wSigma" style="padding:16px 24px">
+    <div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════ TAB 2: HUY CHƯƠNG ĐỐI KHÁNG ══════════════════ -->
+<div id="tab-combat-medal" class="tab-content">
+  <div class="controls">
+    <div class="san-tabs" id="sanCM">
+      <button class="san-btn active" onclick="fSan('cm','all',this)">🏟️ Tất cả</button>
+      <button class="san-btn" onclick="fSan('cm','san1',this)">Sân 1</button>
+      <button class="san-btn" onclick="fSan('cm','san2',this)">Sân 2</button>
+      <button class="san-btn" onclick="fSan('cm','san3',this)">Sân 3</button>
+      <button class="san-btn" onclick="fSan('cm','san4',this)">Sân 4</button>
+    </div>
+    <input class="search-box" id="qCM" type="text" placeholder="🔍 Tên VĐV, nội dung..." oninput="rCombatMedal()">
+    <div class="stats-row">
+      <div class="chip chip-g" id="cmGold">🥇 0</div>
+      <div class="chip chip-b" id="cmSilver">🥈 0</div>
+      <div class="chip chip-g" id="cmBronze">🥉 0</div>
+    </div>
+  </div>
+  <div class="tbl-wrap" id="wCombatMedal"><div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div></div>
+</div>
+
+<!-- ══════════════════ TAB 3: KẾT QUẢ HỘI DIỄN ══════════════════ -->
+<div id="tab-perf-result" class="tab-content">
+  <div class="controls">
+    <input class="search-box" id="qPR" type="text" placeholder="🔍 Tên VĐV, đơn vị, nội dung..." oninput="rPerfResult()">
+    <div class="stats-row">
+      <div class="chip chip-g" id="prCount">🎽 0 VĐV</div>
+      <div class="chip chip-b" id="prNoidung">📂 0 nội dung</div>
+    </div>
+  </div>
+  <div class="tbl-wrap" id="wPerfResult"><div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div></div>
+</div>
+
+<!-- ══════════════════ TAB 3: HUY CHƯƠNG HỘI DIỄN ══════════════════ -->
+<div id="tab-perf-medal" class="tab-content">
+  <div class="controls">
+    <input class="search-box" id="qPM" type="text" placeholder="🔍 Tên VĐV, đơn vị..." oninput="rPerfMedal()">
+    <div class="stats-row">
+      <div class="chip chip-g" id="pmCount">🏅 0 huy chương</div>
+      <div class="chip chip-b" id="pmVDV">👤 0 VĐV</div>
+    </div>
+  </div>
+  <div class="tbl-wrap" id="wPerfMedal"><div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div></div>
+</div>
+
+<!-- ══════════════════ TAB 4: TỔNG SẮC ══════════════════ -->
+<div id="tab-summary" class="tab-content">
+  <div class="controls">
+    <input class="search-box" id="qS" type="text" placeholder="🔍 Tìm đơn vị..." oninput="rSummary()">
+    <div class="stats-row">
+      <div class="chip chip-b" id="sTotal">🏛️ 0 đơn vị</div>
+    </div>
+  </div>
+  <div class="tbl-wrap" id="wSummary"><div class="loading"><div class="spin"></div><div>Đang kết nối...</div></div></div>
+</div>
+
+
+<!-- ── POPUP HUY CHƯƠNG ĐOÀN ── -->
+<div id="donviPopup" class="popup-overlay" style="display:none" onclick="if(event.target===this)closePopup()">
+  <div class="popup-box">
+    <div class="popup-header">
+      <div class="popup-title" id="popupTitle">🏛️ Huy chương đoàn</div>
+      <button class="popup-close" onclick="closePopup()">✕</button>
+    </div>
+    <div class="popup-stats">
+      <span class="popup-chip" style="background:#fef9c3;color:#b45309;border:1px solid #fde68a" id="popupGold">🥇 0</span>
+      <span class="popup-chip" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1" id="popupSilver">🥈 0</span>
+      <span class="popup-chip" style="background:#fef3e2;color:#92400e;border:1px solid #fed7aa" id="popupBronze">🥉 0</span>
+      <span class="popup-chip" style="background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe" id="popupTotal">🏅 0 tổng</span>
+    </div>
+    <div class="popup-body" id="popupBody"></div>
+  </div>
+</div>
+<div class="toast-box" id="toastBox"></div>
+
+<script>
+// ════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════
+const FB = "https://thidauvovinam-default-rtdb.asia-southeast1.firebasedatabase.app";
+const POLL = 5000;
+
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+let combatData   = [];   // tất cả trận
+let drawModesData = {}; // hang_can → "tranh34"|"dong_auto"  (từ Firebase node draw_modes)
+let perfMedals   = [];   // huy chương hội diễn
+let summaryRows  = [];   // tổng sắp
+
+let fC  = 'all', fCM = 'all', fPM = 'all', fPR = 'all', fSigma = 'all';
+let fCList = 'all';  // filter theo danh sách đối kháng
+let prevC = new Set(), prevPM = new Set();
+let newCombatKeys = new Set();
+let perfAllData = [];   // toàn bộ VĐV hội diễn (kể cả chưa có huy chương)
+
+// ════════════════════════════════════════════════
+// TAB SWITCHING
+// ════════════════════════════════════════════════
+// ── Lịch sử điều hướng tab (Back/Forward hoạt động đúng) ──
+let _switchingFromPopstate = false;
+
+function switchTab(name, el, pushHistory = true) {
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else {
+    // Tìm tab button theo name khi gọi từ popstate
+    document.querySelectorAll('.main-tab').forEach(t => {
+      if (t.getAttribute('data-tab') === name) t.classList.add('active');
+    });
+  }
+  const tc = document.getElementById('tab-' + name);
+  if (tc) tc.classList.add('active');
+
+  // Đẩy vào history (trừ khi đang restore từ popstate)
+  if (pushHistory && !_switchingFromPopstate) {
+    const state = { tab: name };
+    const url   = '#' + name;
+    if (history.state?.tab !== name) {
+      history.pushState(state, '', url);
+    }
+  }
+
+  // Trigger render nếu cần
+  if (name === 'summary')      { if (typeof rSummary      === 'function') rSummary(); }
+  if (name === 'combat')       { if (typeof rCombat        === 'function') rCombat(); }
+  if (name === 'combat-medal') { if (typeof rCombatMedal   === 'function') rCombatMedal(); }
+  if (name === 'perf-result')  { if (typeof rPerfResult    === 'function') rPerfResult(); }
+  if (name === 'perf-medal')   { if (typeof rPerfMedal     === 'function') rPerfMedal(); }
+  if (name === 'sigma')        { if (typeof rSigma         === 'function') rSigma(); }
+}
+
+// Xử lý nút Back / Forward của trình duyệt
+window.addEventListener('popstate', function(e) {
+  const tab = e.state?.tab || 'overview';
+  _switchingFromPopstate = true;
+  switchTab(tab, null, false);
+  _switchingFromPopstate = false;
+});
+
+// Ghi state ban đầu (trang overview) vào history khi load
+window.addEventListener('DOMContentLoaded', function() {
+  // Thêm data-tab vào từng tab button để switchTab tìm được
+  const tabNames = ['overview','sigma','combat','combat-medal','perf-result','perf-medal','summary'];
+  document.querySelectorAll('.main-tab').forEach((t, i) => {
+    if (tabNames[i]) t.setAttribute('data-tab', tabNames[i]);
+  });
+
+  // Nếu URL có hash, chuyển đến tab đó
+  const hash = location.hash.replace('#', '');
+  if (hash && document.getElementById('tab-' + hash)) {
+    history.replaceState({ tab: hash }, '', '#' + hash);
+    switchTab(hash, null, false);
+  } else {
+    history.replaceState({ tab: 'overview' }, '', '#overview');
+  }
+});
+
+function navTo(name) {
+  // Tìm tab button tương ứng và click
+  const tabs = document.querySelectorAll('.main-tab');
+  const tabMap = {
+    'sigma':        '🏆 Sigma Đối kháng',
+    'combat':       '⚔️ Danh sách trận Đối kháng',
+    'combat-medal': '🥊 Huy chương Đối kháng',
+    'perf-result':  '🎽 Hội diễn',
+    'perf-medal':   '🏅 Huy chương Hội diễn',
+    'summary':      '🏆 Tổng sắp',
+  };
+  for (const t of tabs) {
+    if (t.textContent.trim().includes(tabMap[name]?.slice(2).trim() || '____NONE')) {
+      switchTab(name, t);
+      return;
+    }
+  }
+  // fallback: chuyển trực tiếp
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  const tc = document.getElementById('tab-' + name);
+  if (tc) tc.classList.add('active');
+}
+
+// ════════════════════════════════════════════════
+// Cập nhật tên giải đấu (dùng chung nhiều nơi)
+// ════════════════════════════════════════════════
+function setTournamentName(nm) {
+  if (!nm || !nm.trim()) return;
+  nm = nm.trim();
+  document.getElementById('ovTitleText').textContent = nm;
+  document.getElementById('headerTitle').textContent = '📋 ' + nm;
+  document.title = nm + ' – Kết quả thi đấu';
+}
+
+function updateOverviewStats() {
+  // Số trận đấu
+  const total = combatData.length;
+  const done  = combatData.filter(r => r.winner_name).length;
+  const vdvHD = perfAllData.length;
+  const donviSet = new Set();
+  for (const r of summaryRows) if (r.donvi) donviSet.add(r.donvi);
+  document.getElementById('ovStatTran').textContent  = total || '—';
+  document.getElementById('ovStatKQ').textContent    = done  || '—';
+  document.getElementById('ovStatVDV').textContent   = vdvHD || '—';
+  document.getElementById('ovStatDonVi').textContent = donviSet.size || '—';
+}
+
+function fSan(tab, san, btn) {
+  if (tab==='c')           { fC  = san; rCombat(); }
+  else if (tab==='cm')     { fCM = san; rCombatMedal(); }
+  else if (tab==='pr')     { fPR = san; rPerfResult(); }
+  else if (tab==='sigma')  { fSigma = san; rSigma(); }
+  else                     { fPM = san; rPerfMedal(); }
+  btn.closest('.san-tabs').querySelectorAll('.san-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ════════════════════════════════════════════════
+// FETCH
+// ════════════════════════════════════════════════
+async function fetchWithTimeout(url, ms=8000) {
+  const ctrl = new AbortController();
+  const tid = setTimeout(()=>ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, {signal: ctrl.signal});
+    clearTimeout(tid);
+    return r;
+  } catch(e) {
+    clearTimeout(tid);
+    throw e;
+  }
+}
+
+async function fetchAll() {
+  let ok = true;
+  try {
+    // 1) results (combat)
+    const r1 = await fetchWithTimeout(`${FB}/results.json`);
+    if (r1.ok) {
+      const d = await r1.json();
+      const flat = [];
+      if (d) for (const [sk, td] of Object.entries(d)) {
+        // pushKey là Firebase push ID — có thể dùng để so sánh thứ tự thời gian (lexicographic)
+        if (td) for (const [pushKey, res] of Object.entries(td)) {
+          if (res && res.STT != null) flat.push({
+            ...res,
+            _san: sk,
+            _pushKey: pushKey,
+            _key: `${sk}_${res.list_name||'default'}_${res.STT}`
+          });
+        }
+      }
+      flat.sort((a,b)=> {
+        const s = +a._san.replace('san','') - +b._san.replace('san','');
+        return s||Number(a.STT)-Number(b.STT);
+      });
+      // ── BƯỚC 0: Pre-dedup theo san + STT (bất kể list_name / tran_key) ────────
+      // Fix lỗi Sân 2: khi Python push danh sách ban đầu và declare_winner push lại
+      // với tran_key khác nhau (do list_name bị encode khác nhau), Firebase có 2 node
+      // khác nhau cho cùng 1 trận. Bước này gom chúng lại TRƯỚC khi phân tích list_name.
+      // Ưu tiên: có winner_name > ts mới hơn > pushKey lớn hơn.
+      const preDed = {};
+      for (const r of flat) {
+        const pk = `${r._san}__${r.STT}`;
+        const ex = preDed[pk];
+        if (!ex) { preDed[pk] = r; continue; }
+        const rHasWin = !!(r.winner_name), exHasWin = !!(ex.winner_name);
+        if (rHasWin && !exHasWin) { preDed[pk] = r; continue; }
+        if (!rHasWin && exHasWin) continue;
+        if ((r.ts||0) > (ex.ts||0)) { preDed[pk] = r; continue; }
+        if (r._pushKey > ex._pushKey) preDed[pk] = r;
+      }
+      const flatDed = Object.values(preDed);
+
+      // ── BƯỚC 1: Dedup theo san + STT + list_name (normalize) ──────────────────
+      // Normalize list_name: bỏ dấu cách thừa, lowercase để tránh lệch key
+      // do Python encode tên nhóm khác nhau (dấu cách, viết hoa, ký tự đặc biệt)
+      function normList(s) {
+        return (s||'default').trim().toLowerCase().replace(/\s+/g,' ');
+      }
+      const dedupFlat = {};
+      for (const r of flatDed) {
+        // Key chính: normalize list_name + STT (trong cùng 1 sân)
+        const dk = `${r._san}__${normList(r.list_name)}__${r.STT}`;
+        const ex = dedupFlat[dk];
+        if (!ex) { dedupFlat[dk] = r; continue; }
+        // Ưu tiên 1: bản có winner_name thắng bản chưa có kết quả
+        const rHasWin = !!(r.winner_name), exHasWin = !!(ex.winner_name);
+        if (rHasWin && !exHasWin) { dedupFlat[dk] = r; continue; }
+        if (!rHasWin && exHasWin) continue;
+        // Ưu tiên 2: cùng trạng thái → ts mới hơn thắng
+        if ((r.ts||0) > (ex.ts||0)) { dedupFlat[dk] = r; continue; }
+        // Ưu tiên 3: ts bằng nhau → pushKey lớn hơn (ghi sau) thắng
+        if (r._pushKey > ex._pushKey) dedupFlat[dk] = r;
+      }
+
+      // ── BƯỚC 2: Dedup trong cùng sân theo san + STT (bỏ qua list_name) ──────
+      // Đây là fix chính: khi Python push danh sách ban đầu dùng list_name="N1"
+      // nhưng khi declare_winner push lại dùng list_name="48kg Nam N1" (hoặc ngược lại),
+      // Firebase sẽ có 2 node khác nhau dù cùng 1 trận → HTML hiện 2 dòng.
+      // Giải pháp: trong cùng 1 sân, cùng STT = cùng 1 trận, chỉ giữ 1 bản.
+      const sanSttDed = {};
+      for (const r of Object.values(dedupFlat)) {
+        const sk = `${r._san}__${r.STT}`;
+        const ex = sanSttDed[sk];
+        if (!ex) { sanSttDed[sk] = r; continue; }
+        const rHasWin = !!(r.winner_name), exHasWin = !!(ex.winner_name);
+        if (rHasWin && !exHasWin) { sanSttDed[sk] = r; continue; }
+        if (!rHasWin && exHasWin) continue;
+        if ((r.ts||0) > (ex.ts||0)) { sanSttDed[sk] = r; continue; }
+        if (r._pushKey > ex._pushKey) sanSttDed[sk] = r;
+      }
+
+      // ── BƯỚC 3: Dedup cross-san — cùng trận nhưng 2 sân cùng push ─────────
+      const crossDed = {};
+      for (const r of Object.values(sanSttDed)) {
+        const ck = `${normList(r.list_name)}__${r.STT}`;
+        const ex = crossDed[ck];
+        if (!ex) { crossDed[ck] = r; continue; }
+        const rHasWin = !!(r.winner_name), exHasWin = !!(ex.winner_name);
+        if (rHasWin && !exHasWin) { crossDed[ck] = r; continue; }
+        if (!rHasWin && exHasWin) continue;
+        if ((r.ts||0) > (ex.ts||0)) { crossDed[ck] = r; }
+      }
+      const dedupedFlat = Object.values(crossDed);
+      const nk = new Set(dedupedFlat.map(r=>r._key));
+      const newCombat = prevC.size>0 ? dedupedFlat.filter(r=>!prevC.has(r._key)) : [];
+      newCombatKeys = new Set(newCombat.map(r=>r._key));
+      if (prevC.size>0) newCombat.forEach(r=>toast(r,'combat'));
+      prevC = nk; combatData = dedupedFlat;
+      // Cập nhật dropdown danh sách
+      const lists = [...new Set(flat.map(r=>r.list_name||'(Chưa phân loại)'))].sort();
+      const sel = document.getElementById('listFilter');
+      const curVal = sel.value;
+      sel.innerHTML = '<option value="all">Tất cả</option>' +
+        lists.map(l=>`<option value="${l}" ${l===curVal?'selected':''}>${l}</option>`).join('');
+      rCombat(); rCombatMedal(); rSigma();
+      rSummary(); // Cập nhật Tổng sắp khi có KQ đối kháng mới
+      // Thử lấy tên giải từ record đối kháng nếu có
+      const nameFromCombat = dedupedFlat.find(r => r.competition_name)?.competition_name;
+      if (nameFromCombat) setTournamentName(nameFromCombat);
+    }
+
+    // 2) performance (hội diễn)
+    const r2 = await fetchWithTimeout(`${FB}/performance.json`);
+    if (r2.ok) {
+      const d = await r2.json();
+      // Thu thập TẤT CẢ VĐV hội diễn từ mọi sân (kể cả chưa có điểm)
+      // Mỗi group trên Firebase có: { san, group_index, ts, performers: [...] }
+      // Dedup theo Ten+Donvi+Noidung: giữ bản ghi có ts MỚI NHẤT (giống logic combat)
+      const groupMap = {}; // key = "Ten|Donvi|Noidung" → group record có ts lớn nhất
+      const allPerf = [];
+      const medals  = [];
+
+      if (d) for (const [sk, groups] of Object.entries(d)) {
+        if (groups) for (const [gk, grp] of Object.entries(groups)) {
+          if (!grp || !grp.performers) continue;
+          // Mỗi performer trong group dùng chung ts của group
+          const grpTs = grp.ts || 0;
+          for (const p of grp.performers) {
+            allPerf.push({...p, _san:sk, _grpTs:grpTs});
+          }
+        }
+      }
+
+      // Dedup: cùng Ten+Donvi+Noidung → giữ bản ts mới nhất, ưu tiên bản có manual_medal
+      const dedupAll = {};
+      for (const p of allPerf) {
+        const dk = `${p.Ten||''}|${p.Donvi||''}|${p.Noidung||''}`;
+        const ex = dedupAll[dk];
+        if (!ex) { dedupAll[dk] = p; continue; }
+        const hasManual = !!(p.manual_medal || p.manual_rank);
+        const exManual  = !!(ex.manual_medal || ex.manual_rank);
+        // Ưu tiên 1: bản có manual_medal/manual_rank thắng bản không có
+        if (hasManual && !exManual) { dedupAll[dk] = p; continue; }
+        if (!hasManual && exManual) continue;
+        // Ưu tiên 2: cùng trạng thái manual → ts mới hơn thắng
+        if ((p._grpTs||0) > (ex._grpTs||0)) { dedupAll[dk] = p; continue; }
+        // Ưu tiên 3: bằng ts → bản có điểm thắng bản chưa có điểm
+        if (typeof p.total_score === 'number' && typeof ex.total_score !== 'number') { dedupAll[dk] = p; }
+      }
+      perfAllData = Object.values(dedupAll);
+      // Sắp xếp theo Noidung → Nhomtuoi → STT
+      perfAllData.sort((a,b) => {
+        const nd = (a.Noidung||'').localeCompare(b.Noidung||'','vi');
+        if (nd) return nd;
+        const nt = (a.Nhomtuoi||'').localeCompare(b.Nhomtuoi||'','vi');
+        if (nt) return nt;
+        return (Number(a.STT)||0) - (Number(b.STT)||0);
+      });
+      rPerfResult();
+      rPerfMedal();   // Cập nhật tab Huy chương Hội diễn
+      rSummary();     // Cập nhật Tổng sắp ngay từ performance data
+
+      // Dedup medals theo Ten+Donvi+Noidung (ưu tiên manual_medal, rồi sân số nhỏ)
+      const dedupMedals = {};
+      for (const m of medals) {
+        const dk = `${m.Ten||''}|${m.Donvi||''}|${m.Noidung||''}`;
+        const ex = dedupMedals[dk];
+        if (!ex) { dedupMedals[dk] = m; continue; }
+        const hasM = !!(m.manual_medal), exM = !!(ex.manual_medal);
+        if (hasM && !exM) { dedupMedals[dk] = m; continue; }
+        if (!hasM && exM) continue;
+        // cùng trạng thái → ưu tiên sân số nhỏ hơn
+        const sn = +m._san.replace('san',''), se = +ex._san.replace('san','');
+        if (sn < se) { dedupMedals[dk] = m; }
+      }
+      const dedupedMedals = Object.values(dedupMedals);
+      const nk2 = new Set(dedupedMedals.map(m=>m._key));
+      if (prevPM.size>0) dedupedMedals.filter(m=>!prevPM.has(m._key)).forEach(m=>toast(m,'perf'));
+      prevPM = nk2; perfMedals = dedupedMedals; rPerfMedal();
+    }
+
+    // 3) summary
+    const r3 = await fetchWithTimeout(`${FB}/summary.json`);
+    if (r3.ok) {
+      const d = await r3.json();
+      summaryRows = (d && d.rows) ? d.rows : [];
+      // Cập nhật tên giải đấu từ Firebase nếu có
+      if (d && d.competition_name) {
+        const nm = d.competition_name.trim();
+        if (nm) setTournamentName(nm);
+      }
+      rSummary();
+    }
+
+    // Luôn poll tên giải từ node riêng — cập nhật ngay khi Python áp dụng cài đặt
+    try {
+      const r4 = await fetchWithTimeout(`${FB}/competition_name.json`);
+      if (r4.ok) {
+        const nm = await r4.json();
+        if (nm && typeof nm === 'string' && nm.trim()) setTournamentName(nm.trim());
+      }
+      // Fetch draw_modes: hang_can → "tranh34"|"dong_auto"
+      try {
+        const r5 = await fetchWithTimeout(`${FB}/draw_modes.json`);
+        if (r5.ok) {
+          const dm = await r5.json();
+          if (dm && typeof dm === 'object') drawModesData = dm;
+        }
+      } catch(e) { /* bỏ qua nếu node chưa có */ }
+    } catch(e) { /* bỏ qua lỗi mạng */ }
+    // Luôn cập nhật stats tổng quan sau khi fetch xong
+    updateOverviewStats();
+
+  } catch(e) { ok = false; console.error('fetchAll error:', e); }
+  updateStatus(ok);
+}
+
+// ════════════════════════════════════════════════
+// FIX: Auto-refresh Sigma tab mỗi 5 giây
+// ════════════════════════════════════════════════
+let sigmaRefreshInterval = null;
+
+function startSigmaAutoRefresh() {
+    if (sigmaRefreshInterval) clearInterval(sigmaRefreshInterval);
+    
+    sigmaRefreshInterval = setInterval(() => {
+        // Chỉ refresh nếu đang ở tab Sigma
+        const sigmaTab = document.getElementById('tab-sigma');
+        if (sigmaTab && sigmaTab.classList.contains('active')) {
+            console.log('🔄 Tự động làm mới dữ liệu Sigma...');
+            rSigma(); // Gọi hàm render lại Sigma
+        }
+    }, 1000); // 5 giây
+}
+
+// Khởi động auto-refresh cho Sigma
+startSigmaAutoRefresh();
+
+// Khi chuyển tab, vẫn giữ interval chạy, chỉ refresh khi active
+// Hàm rSigma đã có sẵn trong code của bạn
+// ════════════════════════════════════════════════
+// RENDER: ĐỐI KHÁNG
+// ════════════════════════════════════════════════
+function rCombat() {
+  const q = document.getElementById('qC').value.toLowerCase().trim();
+  const fCList = document.getElementById('listFilter').value;
+
+  // combatData đã được dedup tại fetchAll (mỗi STT chỉ giữ bản ghi MỚI NHẤT)
+  // Ở đây chỉ lọc theo sân / danh sách / search rồi hiển thị thẳng theo STT tăng dần
+  let rows = combatData.filter(r => {
+    if (fC !== 'all' && r._san !== fC) return false;
+    if (fCList !== 'all' && (r.list_name || '(Chưa phân loại)') !== fCList) return false;
+    if (q && ![r.Ten_Do,r.Donvi_Do,r.Ten_Xanh,r.Donvi_Xanh,r.winner_name,r.Loai_Tran,r.Hang_can,r.Nhomtuoi].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  rows.sort((a, b) => Number(a.STT) - Number(b.STT));
+
+  const done = rows.filter(r => r.winner_name).length;
+  document.getElementById('cDone').textContent  = `✅ ${done} có KQ`;
+  document.getElementById('cTotal').textContent = `📊 ${rows.length} trận`;
+
+  const w = document.getElementById('wCombat');
+  if (!rows.length) { w.innerHTML = emptyHTML('Không có kết quả phù hợp'); return; }
+
+  const loaiStyle = lt => {
+    const l = (lt||'').toLowerCase();
+    if (l === 'chung kết') return 'background:#fef9c3;color:#b45309';
+    if (l === 'bán kết')   return 'background:#dbeafe;color:#1d4ed8';
+    if (l === 'tứ kết')    return 'background:#dcfce7;color:#15803d';
+    if (l === 'vòng loại') return 'background:#dcfce7;color:#15803d';
+    return 'background:#e2e8f0;color:#475569';
+  };
+
+  w.innerHTML = `<div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:50px">STT</th>
+        <th style="width:90px">Loại trận</th>
+        <th style="width:150px">Hạng cân / Nhóm</th>
+        <th>VĐV Đỏ</th>
+        <th style="width:130px">Đơn vị Đỏ</th>
+        <th>VĐV Xanh</th>
+        <th style="width:130px">Đơn vị Xanh</th>
+        <th style="width:200px">Thắng cuộc</th>
+      </tr></thead>
+      <tbody>${rows.map(r => {
+        const isNew  = newCombatKeys.has(r._key);
+        const hasRes = !!r.winner_name;
+        const rowBg  = isNew ? '#fefce8' : !hasRes ? '#fafbfc' : '#fff';
+        return `<tr class="${isNew?'row-new':''}" style="background:${rowBg}">
+          <td style="text-align:center"><span class="badge badge-stt">${esc(String(r.STT))}</span></td>
+          <td style="text-align:center">
+            <span style="font-size:11px;padding:2px 7px;border-radius:8px;font-weight:600;${loaiStyle(r.Loai_Tran)}">${esc(r.Loai_Tran||'')}</span>
+          </td>
+          <td style="font-size:12px;color:#475569">${esc(r.Hang_can||'')}${r.Nhomtuoi&&r.Nhomtuoi!==r.Hang_can?`<br><span style="color:#94a3b8">${esc(r.Nhomtuoi)}</span>`:''}</td>
+          <td style="color:#dc2626;font-weight:${hasRes&&r.winner_team==='red'?700:400}">
+            ${esc(r.Ten_Do||'—')}${hasRes&&r.winner_team==='red'?' 🏆':''}
+          </td>
+          <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Do||'')}</td>
+          <td style="color:#2563eb;font-weight:${hasRes&&r.winner_team==='blue'?700:400}">
+            ${esc(r.Ten_Xanh||'—')}${hasRes&&r.winner_team==='blue'?' 🏆':''}
+          </td>
+          <td style="font-size:12px;color:#64748b">${esc(r.Donvi_Xanh||'')}</td>
+          <td>${hasRes
+            ? `<span style="color:#16a34a;font-weight:700">🏆 ${esc(r.winner_name)}</span>
+               <span style="font-size:11px;color:#64748b;display:block">${esc(r.winner_unit||'')}</span>
+               ${r.reason?`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:#dbeafe;color:#1d4ed8">${esc(r.reason)}</span>`:''}`
+            : `<span style="color:#94a3b8;font-size:12px">⏳ Chưa thi đấu</span>`
+          }</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+  </div>`;
+}
+// ════════════════════════════════════════════════
+// RENDER: HUY CHƯƠNG ĐỐI KHÁNG
+// ════════════════════════════════════════════════
+function rCombatMedal() {
+  const q = document.getElementById('qCM').value.toLowerCase().trim();
+  const medals = [];
+  const mOrder = {'Vàng':1,'Bạc':2,'Đồng':3};
+
+  // ── DEDUP: mỗi trận chỉ giữ 1 bản ghi từ đúng sân thi đấu ──
+  // Key duy nhất = Hang_can + Loai_Tran + Ten_Do + Ten_Xanh
+  // Ưu tiên: sân đang lọc → sân số nhỏ nhất
+  const dedupMap = {};
+  for (const r of combatData) {
+    if (!r.winner_name) continue;
+    const dk = `${r.Hang_can||''}|${(r.Loai_Tran||'').toLowerCase()}|${r.Ten_Do||''}|${r.Ten_Xanh||''}`;
+    const ex = dedupMap[dk];
+    if (!ex) { dedupMap[dk] = r; continue; }
+    if (fCM !== 'all' && r._san === fCM && ex._san !== fCM) { dedupMap[dk] = r; continue; }
+    if (fCM === 'all') {
+      const sn = +r._san.replace('san',''), se = +ex._san.replace('san','');
+      if (sn < se) { dedupMap[dk] = r; }
+    }
+  }
+  const dedupedData = Object.values(dedupMap);
+
+  // Huy chương đối kháng: Vàng/Bạc từ Chung kết, Đồng tuỳ thể thức
+  // draw_mode "tranh34": Đồng = người THẮNG Tranh 3-4 (≥4 VĐV) hoặc người THUA BK duy nhất (3 VĐV)
+  // draw_mode "dong_auto": Đồng = MỌI VĐV thua Bán kết bất kỳ (không có Tranh 3-4)
+
+  // Pre-compute per hạng cân: có Tranh 3-4 không, draw_mode là gì
+  const hcHasTranh34  = {};  // hang_can → true/false
+  const hcDrawMode    = {};  // hang_can → "tranh34"|"dong_auto"
+  const hcBanketList  = {};  // hang_can → [match, ...]
+  for (const r of dedupedData) {
+    if (fCM!=='all' && r._san!==fCM) continue;
+    const hc   = r.Hang_can || '';
+    const loai = (r.Loai_Tran||'').toLowerCase().trim();
+    if (loai.includes('tranh') && loai.includes('3')) hcHasTranh34[hc] = true;
+    if (loai==='bán kết' || loai==='ban ket' || loai==='banket') {
+      if (!hcBanketList[hc]) hcBanketList[hc] = [];
+      hcBanketList[hc].push(r);
+    }
+    // Ghi nhận draw_mode từ Firebase node draw_modes (ưu tiên) → field trên match (fallback)
+    if (hc && !hcDrawMode[hc]) {
+      const _dm = drawModesData[hc] || r.draw_mode || '';
+      if (_dm === 'tranh34' || _dm === 'dong_auto') hcDrawMode[hc] = _dm;
+    }
+  }
+
+  const grouped = {};
+  for (const r of dedupedData) {
+    if (fCM!=='all' && r._san!==fCM) continue;
+    const key  = r.Hang_can || '';
+    if (!grouped[key]) grouped[key] = { nhomtuoi: key, items:[] };
+    const loai = (r.Loai_Tran||'').toLowerCase().trim();
+    const dm   = hcDrawMode[key] || 'tranh34';
+
+    // ── Chung kết → Vàng + Bạc ──
+    if (r.winner_name && loai === 'chung kết') {
+      const winner = r.winner_team==='red' ? {ten:r.Ten_Do,donvi:r.Donvi_Do} : {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh};
+      const loser  = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+      grouped[key].items.push({ medal:'Vàng', ten:winner.ten||r.winner_name, donvi:winner.donvi||r.winner_unit||'', san:r._san });
+      grouped[key].items.push({ medal:'Bạc',  ten:loser.ten||'—', donvi:loser.donvi||'', san:r._san });
+    }
+    // ── Tranh 3-4 → người THẮNG được Đồng ──
+    if (r.winner_name && loai.includes('tranh') && loai.includes('3')) {
+      const winner = r.winner_team==='red' ? {ten:r.Ten_Do,donvi:r.Donvi_Do} : {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh};
+      grouped[key].items.push({ medal:'Đồng', ten:winner.ten||'—', donvi:winner.donvi||'', san:r._san });
+    }
+    // ── Bán kết: dong_auto → người THUA được Đồng ngay ──
+    if (r.winner_name && dm==='dong_auto' &&
+        (loai==='bán kết' || loai==='ban ket' || loai==='banket')) {
+      const loser = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+      grouped[key].items.push({ medal:'Đồng', ten:loser.ten||'—', donvi:loser.donvi||'', san:r._san });
+    }
+  }
+  // ── Bracket 3 VĐV (tranh34 + 1 BK duy nhất, không có Tranh 3-4) ──
+  // Áp dụng sau vòng lặp vì cần biết tổng số BK của hạng cân
+  for (const [hc, bkList] of Object.entries(hcBanketList)) {
+    const dm = hcDrawMode[hc] || 'tranh34';
+    if (dm !== 'tranh34') continue;           // dong_auto đã xử lý trong vòng lặp trên
+    if (hcHasTranh34[hc]) continue;           // có Tranh 3-4 → đã trao Đồng cho người thắng
+    if (bkList.length !== 1) continue;        // ≥2 BK mà tranh34 → đang chờ Tranh 3-4
+    const bk    = bkList[0];
+    if (!bk.winner_name) continue;
+    const loser = bk.winner_team==='red' ? {ten:bk.Ten_Xanh,donvi:bk.Donvi_Xanh} : {ten:bk.Ten_Do,donvi:bk.Donvi_Do};
+    if (!grouped[hc]) grouped[hc] = { nhomtuoi: hc, items:[] };
+    grouped[hc].items.push({ medal:'Đồng', ten:loser.ten||'—', donvi:loser.donvi||'', san:bk._san });
+  }
+
+  const allMedals = Object.values(grouped).flatMap(g=>g.items);
+  const filtered = allMedals.filter(m =>
+    !q || [m.ten,m.donvi,m.medal].join(' ').toLowerCase().includes(q)
+  );
+
+  document.getElementById('cmGold').textContent   = `🥇 ${filtered.filter(m=>m.medal==='Vàng').length}`;
+  document.getElementById('cmSilver').textContent = `🥈 ${filtered.filter(m=>m.medal==='Bạc').length}`;
+  document.getElementById('cmBronze').textContent = `🥉 ${filtered.filter(m=>m.medal.startsWith('Đồng')).length}`;
+
+  const w = document.getElementById('wCombatMedal');
+  if (!filtered.length) { w.innerHTML = emptyHTML('Chưa có huy chương đối kháng'); return; }
+
+  const mIcon = {'Vàng':'🥇','Bạc':'🥈','Đồng':'🥉'};
+  const mCls  = {'Vàng':'medal-gold','Bạc':'medal-silver','Đồng':'medal-bronze'};
+
+  let tbody = '';
+  for (const [, g] of Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b,'vi'))) {
+    const hasAny = g.items.some(m => !q || [m.ten,m.donvi,m.medal].join(' ').toLowerCase().includes(q));
+    if (!hasAny) continue;
+    const label = g.nhomtuoi;
+    tbody += `<tr class="group-header"><td colspan="4">📂 ${esc(label||'Nội dung')}</td></tr>`;
+    for (const m of g.items.sort((a,b)=>(mOrder[a.medal]||9)-(mOrder[b.medal]||9))) {
+      if (q && ![m.ten,m.donvi,m.medal].join(' ').toLowerCase().includes(q)) continue;
+      const sn = m.san.replace('san','');
+      tbody += `<tr>
+        <td><span class="badge-san san-${sn}">Sân ${sn}</span></td>
+        <td><span class="medal ${mCls[m.medal]||'medal-bronze'}">${mIcon[m.medal]||'🏅'} ${esc(m.medal)}</span></td>
+        <td style="font-weight:600">${esc(m.ten||'—')}</td>
+        <td style="color:#475569">${esc(m.donvi||'—')}</td>
+      </tr>`;
+    }
+  }
+  w.innerHTML = `<table>
+    <thead><tr><th>Sân</th><th>Huy chương</th><th>VĐV</th><th>Đơn vị</th></tr></thead>
+    <tbody>${tbody}</tbody></table>`;
+}
+
+
+// ════════════════════════════════════════════════
+// RENDER: KẾT QUẢ HỘI DIỄN
+// Hiển thị TOÀN BỘ danh sách (kể cả chưa thi đấu), nhóm theo Nội dung
+// ════════════════════════════════════════════════
+function rPerfResult() {
+  const q = document.getElementById('qPR').value.toLowerCase().trim();
+  const mOrder = {'Vàng':1,'Bạc':2,'Đồng':3};
+  const mIcon  = {'Vàng':'🥇','Bạc':'🥈','Đồng':'🥉'};
+  const mCls   = {'Vàng':'medal-gold','Bạc':'medal-silver','Đồng':'medal-bronze'};
+
+  const rows = perfAllData.filter(p => {
+    if (q && ![p.Ten,p.Donvi,p.Noidung,p.Nhomtuoi].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const totalWithScore = rows.filter(p => typeof p.total_score === 'number').length;
+  document.getElementById('prCount').textContent   = `🎽 ${rows.length} VĐV (✅ ${totalWithScore} có điểm)`;
+  document.getElementById('prNoidung').textContent = `📂 ${new Set(rows.map(r=>(r.Noidung||'')+'|||'+(r.Nhomtuoi||''))).size} nội dung`;
+
+  const w = document.getElementById('wPerfResult');
+  if (!rows.length) { w.innerHTML = emptyHTML('Chưa có danh sách Hội diễn — bấm "🎽 Đồng bộ danh sách Hội diễn lên Web" trong PY'); return; }
+
+  // Nhóm theo Nội dung + Nhóm tuổi (tránh gộp 2 nội dung cùng tên khác nhóm tuổi)
+  const grouped = {};
+  for (const p of rows) {
+    const nd = p.Noidung || '—';
+    const nt = p.Nhomtuoi || '';
+    const gk = nt ? `${nd}|||${nt}` : nd;
+    if (!grouped[gk]) grouped[gk] = { noidung: nd, nhomtuoi: nt, items: [] };
+    grouped[gk].items.push(p);
+  }
+
+  // Trong mỗi nhóm: luôn giữ nguyên thứ tự STT gốc (thứ tự thi đấu)
+  for (const g of Object.values(grouped)) {
+    g.items.sort((a,b) => (Number(a.STT)||0) - (Number(b.STT)||0));
+  }
+
+  const TH = `background:linear-gradient(135deg,#1d4ed8,#2563eb);color:#fff;padding:8px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px`;
+
+  let html = '';
+  for (const [, g] of Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b,'vi'))) {
+    const { noidung, nhomtuoi, items } = g;
+    const title = nhomtuoi ? `${noidung} — ${nhomtuoi}` : noidung;
+    const doneCount = items.filter(p => typeof p.total_score === 'number').length;
+    const allDone   = doneCount === items.length;
+    html += `<div class="combat-section">
+      <div class="combat-section-header">
+        <span class="combat-section-title">📂 ${esc(title)}</span>
+        <span class="combat-section-count">${allDone ? '✅' : '⏳'} ${doneCount} / ${items.length} đã chấm điểm</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:0 0 10px 10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:0">
+        <thead><tr>
+          <th style="${TH};width:40px">STT</th>
+          <th style="${TH}">VĐV / Đội</th>
+          <th style="${TH};width:150px">Đơn vị</th>
+          <th style="${TH};width:90px">Nhóm tuổi</th>
+          <th style="${TH};width:220px">Điểm giám định</th>
+          <th style="${TH};width:100px">Tổng điểm</th>
+          <th style="${TH};width:120px">Hạng / HC</th>
+        </tr></thead>
+        <tbody>${items.map((p, idx) => {
+          const hasScore = typeof p.total_score === 'number';
+          const medal    = p.manual_medal || p.medal || '';
+          const rank     = p.manual_rank  || p.rank  || '';
+          const scores   = Array.isArray(p.scores) ? p.scores : [];
+          const ignoreIdx = Array.isArray(p.ignore_indices) ? new Set(p.ignore_indices) : new Set();
+          const rowBg    = hasScore ? '#fff' : '#fafbfc';
+
+          // Hiển thị từng điểm GĐ, in đậm điểm được tính (không bị loại)
+          const scoresHtml = scores.length
+            ? scores.map((s, i) => {
+                const val = typeof s === 'number' ? s.toFixed(2) : s;
+                const isIgnored = ignoreIdx.has(i);
+                return `<span style="font-size:12px;padding:1px 5px;border-radius:4px;margin:1px;display:inline-block;
+                  background:${isIgnored ? '#f1f5f9' : '#fef9c3'};
+                  color:${isIgnored ? '#94a3b8' : '#b45309'};
+                  text-decoration:${isIgnored ? 'line-through' : 'none'};
+                  font-weight:${isIgnored ? 400 : 700}">${val}</span>`;
+              }).join('')
+            : `<span style="color:#94a3b8;font-size:12px">⏳ Chưa chấm điểm</span>`;
+
+          return `<tr style="background:${rowBg};border-bottom:1px solid #f1f5f9">
+            <td style="padding:9px 12px;text-align:center;color:#64748b;font-size:12px">${idx+1}</td>
+            <td style="padding:9px 12px;font-weight:600;color:#1e293b">${esc(p.Ten||'—')}</td>
+            <td style="padding:9px 12px;font-size:12px;color:#475569">${esc(p.Donvi||'—')}</td>
+            <td style="padding:9px 12px;font-size:12px;color:#64748b">${esc(p.Nhomtuoi||'')}</td>
+            <td style="padding:9px 12px">${scoresHtml}</td>
+            <td style="padding:9px 12px;font-size:18px;font-weight:800;color:${hasScore?'#2563eb':'#94a3b8'}">
+              ${hasScore ? p.total_score.toFixed(2) : '—'}
+            </td>
+            <td style="padding:9px 12px">
+              ${rank  ? `<span class="rank-tag" style="margin-bottom:3px;display:inline-block">Hạng ${esc(String(rank))}</span><br>` : ''}
+              ${medal ? `<span class="medal ${mCls[medal]||'medal-bronze'}">${mIcon[medal]||'🏅'} ${esc(medal)}</span>` : (!hasScore ? '' : '<span style="color:#94a3b8;font-size:12px">—</span>')}
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+  w.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════
+// RENDER: HUY CHƯƠNG HỘI DIỄN
+// Sắp xếp: nhóm theo (Nội dung) → trong mỗi nội dung: Vàng → Bạc → Đồng
+// ════════════════════════════════════════════════
+function rPerfMedal() {
+  const q = document.getElementById('qPM').value.toLowerCase().trim();
+  const mOrder = {'Vàng':1,'Bạc':2,'Đồng':3};
+
+  // Lấy từ perfAllData — chỉ lấy những VĐV đã có huy chương
+  let rows = perfAllData.filter(m => {
+    const medal = m.manual_medal || m.medal || '';
+    if (!medal) return false;
+    if (q && ![m.Ten,m.Donvi,m.Noidung,m.Nhomtuoi,medal].join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  document.getElementById('pmCount').textContent = `🏅 ${rows.length} huy chương`;
+  document.getElementById('pmVDV').textContent   = `👤 ${new Set(rows.map(r=>r.Ten+'|'+r.Donvi)).size} VĐV`;
+
+  const w = document.getElementById('wPerfMedal');
+  if (!rows.length) { w.innerHTML = emptyHTML('Chưa có huy chương Hội diễn'); return; }
+
+  // Nhóm theo Nội dung + Nhóm tuổi (tránh gộp 2 nội dung cùng tên khác nhóm tuổi)
+  const grouped = {};
+  for (const m of rows) {
+    const nd = m.Noidung || '';
+    const nt = m.Nhomtuoi || '';
+    const gk = nt ? `${nd}|||${nt}` : nd;
+    if (!grouped[gk]) grouped[gk] = { noidung: nd, nhomtuoi: nt, items: [] };
+    grouped[gk].items.push(m);
+  }
+  // Sắp xếp trong nhóm: Vàng → Bạc → Đồng
+  for (const g of Object.values(grouped)) {
+    g.items.sort((a,b) => {
+      const ma = a.manual_medal||a.medal||'', mb = b.manual_medal||b.medal||'';
+      return (mOrder[ma]||9) - (mOrder[mb]||9);
+    });
+  }
+
+  const mIcon = {'Vàng':'🥇','Bạc':'🥈','Đồng':'🥉'};
+  const mCls  = {'Vàng':'medal-gold','Bạc':'medal-silver','Đồng':'medal-bronze'};
+
+  let tbody = '';
+  for (const [, g] of Object.entries(grouped).sort(([a],[b])=>a.localeCompare(b,'vi'))) {
+    const title = g.nhomtuoi ? `${g.noidung} — ${g.nhomtuoi}` : (g.noidung || 'Nội dung');
+    tbody += `<tr class="group-header"><td colspan="6">📂 ${esc(title)}</td></tr>`;
+    for (const m of g.items) {
+      const medal = m.manual_medal||m.medal||'';
+      const sn    = (m._san||'san1').replace('san','');
+      const rank  = m.manual_rank||m.rank||'';
+      tbody += `<tr>
+        <td><span class="badge-san san-${sn}">Sân ${sn}</span></td>
+        <td><span class="medal ${mCls[medal]||'medal-bronze'}">${mIcon[medal]||'🏅'} ${esc(medal)}</span></td>
+        <td style="font-weight:600">${esc(m.Ten||'—')}</td>
+        <td style="color:#475569">${esc(m.Donvi||'—')}</td>
+        <td style="color:#64748b;font-size:12px">${esc(m.Nhomtuoi||'')}</td>
+        <td>${rank?`<span class="rank-tag">Hạng ${esc(String(rank))}</span>`:''} ${typeof m.total_score==='number'?`<span style="color:#2563eb;font-weight:600;margin-left:4px">${m.total_score.toFixed(2)}</span>`:''}</td>
+      </tr>`;
+    }
+  }
+
+  w.innerHTML = `<table>
+    <thead><tr><th>Sân</th><th>Huy chương</th><th>VĐV / Đội</th><th>Đơn vị</th><th>Nhóm tuổi</th><th>Hạng / Điểm</th></tr></thead>
+    <tbody>${tbody}</tbody></table>`;
+}
+
+// ════════════════════════════════════════════════
+// RENDER: TỔNG SẮP
+// ════════════════════════════════════════════════
+function buildSummaryFromData() {
+  // Tính tổng sắp trực tiếp từ dữ liệu combat + performance
+  const medalCount = {}; // donvi -> {vang, bac, dong}
+  const ensure = (d) => { if (!medalCount[d]) medalCount[d] = {vang:0, bac:0, dong:0}; };
+
+  // --- Đối kháng ---
+  const _dedup = {};
+  for (const r of combatData) {
+    if (!r.winner_name) continue;
+    const dk = `${r.Hang_can||''}|${(r.Loai_Tran||'').toLowerCase()}|${r.Ten_Do||''}|${r.Ten_Xanh||''}`;
+    const ex = _dedup[dk];
+    if (!ex) { _dedup[dk] = r; continue; }
+    const sn = +r._san.replace('san',''), se = +ex._san.replace('san','');
+    if (sn < se) _dedup[dk] = r;
+  }
+  // Pre-compute per hạng cân: Tranh 3-4, danh sách BK, draw_mode
+  const hcTranh34    = new Set();
+  const banketMap    = {};   // hang_can → [match, ...]
+  const hcDrawMode2  = {};   // hang_can → "tranh34"|"dong_auto"
+  for (const r of Object.values(_dedup)) {
+    const loai = (r.Loai_Tran||'').toLowerCase().trim();
+    const hc   = r.Hang_can || '';
+    if (loai.includes('tranh') && loai.includes('3')) hcTranh34.add(hc);
+    if (loai==='bán kết' || loai==='ban ket' || loai==='banket') {
+      if (!banketMap[hc]) banketMap[hc] = [];
+      banketMap[hc].push(r);
+    }
+    if (hc && !hcDrawMode2[hc]) {
+      const _dm2 = drawModesData[hc] || r.draw_mode || '';
+      if (_dm2 === 'tranh34' || _dm2 === 'dong_auto') hcDrawMode2[hc] = _dm2;
+    }
+  }
+
+  for (const r of Object.values(_dedup)) {
+    const loai = (r.Loai_Tran||'').toLowerCase().trim();
+    const hc   = r.Hang_can || '';
+    const dm   = hcDrawMode2[hc] || 'tranh34';
+
+    // Chung kết → Vàng + Bạc
+    if (loai === 'chung kết') {
+      const winner = r.winner_team==='red' ? r.Donvi_Do : r.Donvi_Xanh;
+      const loser  = r.winner_team==='red' ? r.Donvi_Xanh : r.Donvi_Do;
+      if (winner) { ensure(winner); medalCount[winner].vang++; }
+      if (loser)  { ensure(loser);  medalCount[loser].bac++; }
+    }
+    // Tranh 3-4 → người THẮNG được Đồng
+    if (loai.includes('tranh') && loai.includes('3')) {
+      const winner = r.winner_team==='red' ? r.Donvi_Do : r.Donvi_Xanh;
+      if (winner) { ensure(winner); medalCount[winner].dong++; }
+    }
+    // Bán kết + dong_auto → người THUA ngay lập tức được Đồng
+    if (dm==='dong_auto' && (loai==='bán kết' || loai==='ban ket' || loai==='banket')) {
+      const loser = r.winner_team==='red' ? r.Donvi_Xanh : r.Donvi_Do;
+      if (loser) { ensure(loser); medalCount[loser].dong++; }
+    }
+  }
+  // Bracket 3 VĐV (tranh34 + chỉ 1 BK duy nhất, không có Tranh 3-4):
+  // người THUA BK duy nhất = HC Đồng
+  for (const [hc, bkList] of Object.entries(banketMap)) {
+    const dm = hcDrawMode2[hc] || 'tranh34';
+    if (dm !== 'tranh34') continue;        // dong_auto đã xử lý trên
+    if (hcTranh34.has(hc)) continue;       // có Tranh 3-4 → đã trao ở vòng trên
+    if (bkList.length !== 1) continue;     // ≥2 BK + tranh34 → đang chờ Tranh 3-4
+    const bk    = bkList[0];
+    if (!bk.winner_name) continue;
+    const loser = bk.winner_team==='red' ? bk.Donvi_Xanh : bk.Donvi_Do;
+    if (loser) { ensure(loser); medalCount[loser].dong++; }
+  }
+
+  // --- Hội diễn ---
+  for (const p of perfAllData) {
+    const medal = p.manual_medal || p.medal || '';
+    const donvi = p.Donvi || '';
+    if (!medal || !donvi) continue;
+    ensure(donvi);
+    if (medal === 'Vàng') medalCount[donvi].vang++;
+    else if (medal === 'Bạc') medalCount[donvi].bac++;
+    else if (medal.startsWith('Đồng')) medalCount[donvi].dong++;
+  }
+
+  // Chuyển thành mảng và xếp hạng
+  const rows = Object.entries(medalCount)
+    .filter(([, c]) => c.vang+c.bac+c.dong > 0)
+    .map(([donvi, c]) => ({ donvi, vang:c.vang, bac:c.bac, dong:c.dong }));
+
+  rows.sort((a, b) => {
+    if (b.vang !== a.vang) return b.vang - a.vang;
+    if (b.bac  !== a.bac)  return b.bac  - a.bac;
+    if (b.dong !== a.dong) return b.dong - a.dong;
+    return a.donvi.localeCompare(b.donvi, 'vi');
+  });
+
+  let rank = 1;
+  return rows.map((r, i) => {
+    if (i > 0) {
+      const prev = rows[i-1];
+      if (r.vang !== prev.vang || r.bac !== prev.bac || r.dong !== prev.dong) rank = i+1;
+    }
+    return { ...r, xephang: rank };
+  });
+}
+
+function rSummary() {
+  const q = document.getElementById('qS').value.toLowerCase().trim();
+
+  // Luôn tính real-time từ combatData + perfAllData (phản ánh xóa/sửa kết quả ngay lập tức)
+  const rows = buildSummaryFromData().filter(r => !q || (r.donvi||'').toLowerCase().includes(q));
+
+  document.getElementById('sTotal').textContent = `🏛️ ${rows.length} đơn vị`;
+  const w = document.getElementById('wSummary');
+  if (!rows.length) { w.innerHTML = emptyHTML('Chưa có dữ liệu tổng sắp — Python cần gọi firebase_push_summary()'); return; }
+
+  const tbody = rows.map(r => {
+    const xh = r.xephang;
+    const rankCls = xh===1?'rank-1':xh===2?'rank-2':xh===3?'rank-3':'';
+    const trophy = xh===1?'🥇 ':xh===2?'🥈 ':xh===3?'🥉 ':'';
+    return `<tr class="summary-row-click" onclick="showDonviMedals('${r.donvi.replace(/'/g,"\\'")}')">
+      <td class="${rankCls}">${trophy}${r.xephang}</td>
+      <td style="font-weight:${xh<=3?700:400};color:#1e293b">${esc(r.donvi)}</td>
+      <td class="num-gold">${r.vang||0}</td>
+      <td class="num-silver">${r.bac||0}</td>
+      <td class="num-bronze">${r.dong||0}</td>
+      <td style="color:#475569">${(r.vang||0)+(r.bac||0)+(r.dong||0)}</td>
+    </tr>`;
+  }).join('');
+
+  w.innerHTML = `<table>
+    <thead><tr><th>Xếp hạng</th><th>Đơn vị</th><th>🥇 Vàng</th><th>🥈 Bạc</th><th>🥉 Đồng</th><th>Tổng HC</th></tr></thead>
+    <tbody>${tbody}</tbody></table>`;
+}
+
+// ════════════════════════════════════════════════
+// RENDER: SIGMA ĐỐI KHÁNG — Sơ đồ bracket theo hạng cân
+// ════════════════════════════════════════════════
+function rSigma() {
+  const w = document.getElementById('wSigma');
+  if (!combatData.length) {
+    w.innerHTML = `<div class="empty"><div class="ico">⚔️</div><div>Chưa có dữ liệu đối kháng</div></div>`;
+    return;
+  }
+
+  // ── Lọc theo sân ──
+  let rows = fSigma === 'all' ? combatData : combatData.filter(r => r._san === fSigma);
+
+  // ── Cập nhật dropdown hạng cân ──
+  const sel = document.getElementById('sigmaWeightFilter');
+  const curW = sel.value;  // Lưu lại giá trị đang chọn
+  const weights = [...new Set(rows.map(r => r.Hang_can || '').filter(Boolean))].sort((a,b) => a.localeCompare(b,'vi'));
+  sel.innerHTML = '<option value="all">Tất cả</option>' +
+    weights.map(wc => `<option value="${esc(wc)}" ${wc === curW ? 'selected' : ''}>${esc(wc)}</option>`).join('');
+  // ✅ FIX: Đọc sel.value SAU khi rebuild innerHTML để lấy giá trị thực tế
+  // Nếu hạng cân cũ vẫn còn trong danh sách → giữ nguyên, ngược lại sẽ về 'all'
+  const weightFilter = sel.value || 'all';
+  if (weightFilter !== 'all') rows = rows.filter(r => (r.Hang_can||'') === weightFilter);
+
+  // ── Dedup: mỗi hạng cân + loại trận + đội chỉ giữ 1 bản ghi từ sân có số nhỏ nhất ──
+  const dedupMap = {};
+  for (const r of rows) {
+    const dk = `${r.Hang_can||''}|${(r.Loai_Tran||'').toLowerCase()}|${r.Ten_Do||''}|${r.Ten_Xanh||''}`;
+    const ex = dedupMap[dk];
+    if (!ex) { dedupMap[dk] = r; continue; }
+    if (fSigma !== 'all' && r._san === fSigma && ex._san !== fSigma) { dedupMap[dk] = r; continue; }
+    const sn = +r._san.replace('san',''), se = +ex._san.replace('san','');
+    if (sn < se) dedupMap[dk] = r;
+  }
+  const deduped = Object.values(dedupMap);
+
+  // ── Nhóm theo hạng cân ──
+  const byWeight = {};
+  for (const r of deduped) {
+    const wc = r.Hang_can || '—';
+    if (!byWeight[wc]) byWeight[wc] = [];
+    byWeight[wc].push(r);
+  }
+
+  const weightKeys = Object.keys(byWeight).sort((a,b) => a.localeCompare(b,'vi'));
+  document.getElementById('sigmaTotal').textContent = `📊 ${weightKeys.length} hạng cân`;
+  document.getElementById('sigmaDone').textContent = `✅ ${deduped.filter(r=>r.winner_name).length} có KQ`;
+
+  if (!weightKeys.length) {
+    w.innerHTML = `<div class="empty"><div class="ico">🔍</div><div>Không có dữ liệu phù hợp</div></div>`;
+    return;
+  }
+
+  // ── Render từng hạng cân ──
+  w.innerHTML = weightKeys.map(wc => renderSigmaWeight(wc, byWeight[wc])).join('');
+}
+
+// ────────────────────────────────────────────────
+// Dựng sơ đồ bracket cho 1 hạng cân
+// ────────────────────────────────────────────────
+function renderSigmaWeight(weightClass, matches) {
+  const doneCount = matches.filter(r => r.winner_name).length;
+  const sanLabel = [...new Set(matches.map(r => r._san.replace('san','Sân ')))].join(', ');
+
+  // Sắp xếp trận theo STT
+  matches.sort((a,b) => Number(a.STT) - Number(b.STT));
+
+  // Xác định thứ tự vòng đấu
+  const typeOrder = { 'vòng loại': 0, 'tứ kết': 1, 'bán kết': 2, 'chung kết': 3 };
+  const getTypeOrder = r => typeOrder[(r.Loai_Tran||'').toLowerCase().trim()] ?? 99;
+
+  // Nhóm theo loại trận (vòng đấu)
+  const rounds = {};
+  for (const r of matches) {
+    const t = (r.Loai_Tran||'').toLowerCase().trim();
+    if (!rounds[t]) rounds[t] = [];
+    rounds[t].push(r);
+  }
+
+  // Sắp xếp các vòng
+  const roundKeys = Object.keys(rounds).sort((a,b) => (typeOrder[a]??99) - (typeOrder[b]??99));
+
+  // ── Dựng cây bracket ──
+  // Tái tạo cây: dựa vào STT của trận và loại trận để suy ra quan hệ cha-con
+  // Logic: chung kết ← bán kết ← tứ kết/vòng loại
+  // Ta dùng STT của trận để map vào "Thắng trận X" từ combatData
+  const stts = matches.map(r => Number(r.STT));
+  const matchByStt = {};
+  for (const r of matches) matchByStt[Number(r.STT)] = r;
+
+  // Render dạng bracket columns
+  // Cột trái nhất = lá (vòng loại/tứ kết hoặc bán kết nếu không có vòng loại)
+  // Cột phải nhất = chung kết
+  const cols = roundKeys.map(rk => rounds[rk]);
+
+  const roundNames = {
+    'vòng loại': '🔸 Vòng loại',
+    'tứ kết': '⚡ Tứ kết',
+    'bán kết': '🥊 Bán kết',
+    'chung kết': '🏆 Chung kết'
+  };
+
+  // ── SVG bracket ──
+  const bracketHTML = buildBracketSVG(matches, weightClass);
+
+  return `<div class="sigma-weight-block">
+    <div class="sigma-weight-header">
+      <div>
+        <div class="sigma-weight-title">🏋️ Hạng cân: ${esc(weightClass)}</div>
+        <div class="sigma-weight-meta">${sanLabel} &nbsp;·&nbsp; ${matches.length} trận &nbsp;·&nbsp; ${doneCount}/${matches.length} có KQ</div>
+      </div>
+      <div style="font-size:22px">${doneCount === matches.length && matches.length > 0 ? '🏁' : '⏳'}</div>
+    </div>
+    <div class="sigma-bracket-area">${bracketHTML}</div>
+  </div>`;
+}
+
+// ────────────────────────────────────────────────
+// Dựng sơ đồ bracket bằng HTML/CSS (không cần SVG)
+// ────────────────────────────────────────────────
+function buildBracketSVG(matches, weightClass) {
+  if (!matches || !matches.length) {
+    return `<div class="sigma-empty">Không có dữ liệu trận đấu</div>`;
+  }
+
+  // ===== CONFIG =====
+  const F_W  = 220;  // Fighter/Winner box width
+  const F_H  = 64;   // box height
+  const GAP_Y = 28;  // vertical gap between 2 children of same match
+  const COL_GAP = 80; // horizontal: right edge of child → left edge of winner box
+  const LEFT_PAD = 24;
+  const TOP_PAD  = 24;
+  const RIGHT_PAD  = 40;
+  const BOTTOM_PAD = 36;
+  const STROKE = 2;
+
+  function escT(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function trunc(s,n){ s=String(s||''); return s.length>n?s.slice(0,n-1)+'…':s; }
+  function norm(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase(); }
+
+  function roundOrd(lt) {
+    const s = norm(lt);
+    if (s==='vong loai') return 1;
+    if (s==='1/32')      return 2;
+    if (s==='1/16')      return 3;
+    if (s==='1/8')       return 4;
+    if (s==='tu ket')    return 5;
+    if (s==='ban ket')   return 6;
+    if (s==='chung ket') return 7;
+    return 0; // unknown (Tranh 3-4 etc.) → not in main tree
+  }
+
+  // ===== PHÂN LOẠI TRANH 3-4 =====
+  function isTranh34(m) {
+    const s = norm(m.Loai_Tran||'');
+    return s.includes('tranh') || (s.includes('hang') && s.includes('3'));
+  }
+
+  const ms = [...matches].sort((a,b) => Number(a.STT)-Number(b.STT));
+  const tranh34Match = ms.find(m => isTranh34(m)) || null;
+  const mainMs = ms.filter(m => !isTranh34(m));
+
+  if (!mainMs.length && !tranh34Match) {
+    return `<div class="sigma-empty">Không có dữ liệu trận đấu</div>`;
+  }
+
+  // ===== MAP STT → match =====
+  const bySTT = {};
+  for (const m of ms) bySTT[Number(m.STT)] = m;
+
+  // ===== PARSE "Thắng trận X" / "Thua trận X" → STT số =====
+  function parseSrcStt(text) {
+    if (!text) return null;
+    const t = norm(text);
+    // "thang tran 64", "thua tran 64", "thang tran so 64" ...
+    const m = t.match(/(?:thang|thua)\s+tran\s+(?:so\s+)?(\d+)/);
+    return m ? Number(m[1]) : null;
+  }
+
+  // Với mỗi trận, lấy STT của trận nguồn (src) cho phía Đỏ và Xanh
+  // Ưu tiên: src_do/src_xanh (số) → parse Ten_Do/Ten_Xanh (text)
+  function getSrc(m, side) {
+    if (side === 'red') {
+      if (m.src_do != null) return Number(m.src_do);
+      return parseSrcStt(m.Ten_Do);
+    } else {
+      if (m.src_xanh != null) return Number(m.src_xanh);
+      return parseSrcStt(m.Ten_Xanh);
+    }
+  }
+
+  // ===== DỰNG CÂY ĐỆ QUY =====
+  // Bước 1: xây quan hệ cha-con dựa trên src_do/src_xanh (ưu tiên)
+  // Bước 2 (fallback): nếu không có src → ghép theo Loai_Tran + thứ tự STT
+  //   Nguyên tắc: mỗi trận vòng cao hơn nhận 2 trận vòng thấp hơn liền kề làm con
+  //   (đúng với cấu trúc bracket chuẩn single-elimination)
+
+  // Nhóm trận theo vòng, sắp xếp theo STT tăng dần
+  const byRound = {};
+  for (const m of mainMs) {
+    const ord = roundOrd(m.Loai_Tran);
+    if (!byRound[ord]) byRound[ord] = [];
+    byRound[ord].push(m);
+  }
+  const roundOrds = Object.keys(byRound).map(Number).sort((a,b)=>a-b);
+
+  // Xây map cha-con từ src_do/src_xanh trước
+  const parentOf  = {};   // stt → parent match
+  const childrenOf = {};  // stt → [redChild, blueChild]
+
+  for (const m of mainMs) {
+    const stt = Number(m.STT);
+    const srcR = getSrc(m, 'red');
+    const srcB = getSrc(m, 'blue');
+    const kids = [];
+    if (srcR != null && bySTT[srcR] && !isTranh34(bySTT[srcR])) {
+      parentOf[srcR] = stt;
+      kids[0] = srcR;
+    } else {
+      kids[0] = null;
+    }
+    if (srcB != null && bySTT[srcB] && !isTranh34(bySTT[srcB])) {
+      parentOf[srcB] = stt;
+      kids[1] = srcB;
+    } else {
+      kids[1] = null;
+    }
+    childrenOf[stt] = kids;
+  }
+
+  // Fallback: với các trận mà src không xác định được, ghép theo vị trí trong vòng
+  // Mỗi trận vòng i ghép với 2 trận vòng i-1 theo chỉ số (index*2, index*2+1)
+  for (let ri = 1; ri < roundOrds.length; ri++) {
+    const ord  = roundOrds[ri];
+    const pOrd = roundOrds[ri-1];
+    const parents  = byRound[ord].slice().sort((a,b)=>Number(a.STT)-Number(b.STT));
+    const children = byRound[pOrd].slice().sort((a,b)=>Number(a.STT)-Number(b.STT));
+    parents.forEach((p, pi) => {
+      const pstt = Number(p.STT);
+      const kids = childrenOf[pstt] || [null, null];
+      // Gán con còn thiếu theo vị trí bracket
+      let filled = 0;
+      if (kids[0] == null) {
+        const ci = pi * 2;
+        if (ci < children.length && parentOf[Number(children[ci].STT)] == null) {
+          kids[0] = Number(children[ci].STT);
+          parentOf[Number(children[ci].STT)] = pstt;
+          filled++;
+        }
+      }
+      if (kids[1] == null) {
+        const ci = pi * 2 + 1;
+        if (ci < children.length && parentOf[Number(children[ci].STT)] == null) {
+          kids[1] = Number(children[ci].STT);
+          parentOf[Number(children[ci].STT)] = pstt;
+        }
+      }
+      childrenOf[pstt] = kids;
+    });
+  }
+
+  // Kiểm tra BYE: ô trống/dash → không có VĐV thực
+  function isBye(name) {
+    if (!name) return true;
+    const s = name.trim();
+    return s === '' || s === '—' || s === '-' || s.toLowerCase() === 'bye';
+  }
+
+  // Dựng node đệ quy từ map đã xây
+  function buildNode(m, visited) {
+    if (!visited) visited = new Set();
+    const stt = Number(m.STT);
+    if (visited.has(stt)) return { kind: 'fighter', match: m, side: 'red' };
+    visited = new Set(visited);
+    visited.add(stt);
+
+    const kids = childrenOf[stt] || [null, null];
+
+    // Kiểm tra BYE: nếu phía xanh hoặc đỏ là BYE và không có trận con
+    // thì trận này thực chất chỉ có 1 VĐV → đánh dấu là bye_match
+    const redIsBye  = kids[0] == null && isBye(m.Ten_Do);
+    const blueIsBye = kids[1] == null && isBye(m.Ten_Xanh);
+
+    // Nếu cả hai phía đều là trận con hoặc VĐV thực → render bình thường
+    const childRed = (kids[0] != null && bySTT[kids[0]])
+      ? buildNode(bySTT[kids[0]], visited)
+      : { kind: 'fighter', match: m, side: 'red', isBye: redIsBye };
+
+    const childBlue = (kids[1] != null && bySTT[kids[1]])
+      ? buildNode(bySTT[kids[1]], visited)
+      : { kind: 'fighter', match: m, side: 'blue', isBye: blueIsBye };
+
+    // Nếu một phía BYE → trận này là bye_match: chỉ vẽ VĐV thực, bỏ qua ô BYE
+    if (redIsBye && !blueIsBye) {
+      // VĐV xanh thắng trực tiếp (lên vòng trên mà không đấu)
+      return { kind: 'bye_match', match: m, winner: childBlue, winnerSide: 'blue' };
+    }
+    if (blueIsBye && !redIsBye) {
+      // VĐV đỏ thắng trực tiếp
+      return { kind: 'bye_match', match: m, winner: childRed, winnerSide: 'red' };
+    }
+
+    return { kind: 'match', match: m, children: [childRed, childBlue] };
+  }
+
+  // ===== TÌM ROOT (chung kết) =====
+  // Root = trận không được dùng làm con của trận nào khác
+  const usedAsSrc = new Set(Object.keys(parentOf).map(Number));
+  let roots = mainMs.filter(m => !usedAsSrc.has(Number(m.STT)) && roundOrd(m.Loai_Tran) > 0);
+
+  if (roots.length > 1) {
+    const maxOrd = Math.max(...roots.map(m => roundOrd(m.Loai_Tran)));
+    roots = roots.filter(m => roundOrd(m.Loai_Tran) === maxOrd);
+  }
+
+  if (!roots.length) {
+    const maxOrd = Math.max(...mainMs.map(m => roundOrd(m.Loai_Tran)));
+    roots = mainMs.filter(m => roundOrd(m.Loai_Tran) === maxOrd);
+  }
+
+  // ===== XỬ LÝ TRƯỜNG HỢP ĐẶC BIỆT: nhiều roots cùng loại trận =====
+  // Nếu có nhiều roots, kiểm tra xem có trận bye nào (1 VĐV thực) không
+  // và ghép chúng vào đúng trận cha dựa trên Ten_Do của trận cha
+  if (roots.length > 1) {
+    // Tìm các trận bye: có đúng 1 VĐV thực (Ten_Do là VĐV thực, Ten_Xanh là BYE hoặc ngược lại)
+    const byeRoots    = roots.filter(m => isBye(m.Ten_Do) || isBye(m.Ten_Xanh));
+    const normalRoots = roots.filter(m => !isBye(m.Ten_Do) && !isBye(m.Ten_Xanh));
+
+    if (byeRoots.length > 0 && normalRoots.length > 0) {
+      // Với mỗi trận bye, tìm trận bình thường có Ten_Do hoặc Ten_Xanh trùng với VĐV bye
+      for (const bm of byeRoots) {
+        const byeVdv = norm(isBye(bm.Ten_Do) ? (bm.Ten_Xanh||'') : (bm.Ten_Do||''));
+        const bmStt  = Number(bm.STT);
+
+        for (const nm of normalRoots) {
+          const nmStt = Number(nm.STT);
+          const nmRed  = norm(nm.Ten_Do||'');
+          const nmBlue = norm(nm.Ten_Xanh||'');
+
+          // Nếu Ten_Do của trận bình thường trùng với VĐV bye → bye là childRed của nm
+          if (nmRed === byeVdv && childrenOf[nmStt][0] == null) {
+            childrenOf[nmStt][0] = bmStt;
+            parentOf[bmStt] = nmStt;
+          }
+          // Nếu Ten_Xanh của trận bình thường trùng → bye là childBlue của nm
+          else if (nmBlue === byeVdv && childrenOf[nmStt][1] == null) {
+            childrenOf[nmStt][1] = bmStt;
+            parentOf[bmStt] = nmStt;
+          }
+        }
+      }
+
+      // Sau khi ghép, chỉ giữ lại các roots thực sự (không được dùng làm con)
+      const usedNow = new Set(Object.keys(parentOf).map(Number));
+      roots = roots.filter(m => !usedNow.has(Number(m.STT)));
+    }
+  }
+
+  const trees = roots.map(m => buildNode(m));
+
+  // ===== TÍNH CHIỀU CAO NODE =====
+  function nodeH(node) {
+    if (node.kind === 'fighter')   return F_H;
+    if (node.kind === 'bye_match') return nodeH(node.winner);  // bye: chỉ cao bằng nhánh thực
+    const [c1, c2] = node.children;
+    return nodeH(c1) + GAP_Y + nodeH(c2);
+  }
+
+  // Tính chiều rộng ngang của phần TRƯỚC ô winner (tức là phần children chiếm)
+  // Dùng để căn chỉnh các lá có độ sâu khác nhau về cùng cột
+  function leafWidth(node) {
+    if (node.kind === 'fighter')   return node.isBye ? 0 : F_W;
+    if (node.kind === 'bye_match') return leafWidth(node.winner);
+    const [c1, c2] = node.children;
+    // Chiều rộng của subtree = max của 2 con + khoảng nối + winner box
+    const childW = Math.max(leafWidth(c1), leafWidth(c2));
+    return childW + Math.round(COL_GAP*0.5) + F_W;
+  }
+
+  // ===== SVG =====
+  let svg = '';
+
+  function line(x1,y1,x2,y2,col) {
+    svg += `<line x1="${x1|0}" y1="${y1|0}" x2="${x2|0}" y2="${y2|0}" stroke="${col||'#374151'}" stroke-width="${STROKE}" stroke-linecap="round"/>`;
+  }
+
+  // Vẽ ô lá (VĐV thực)
+  function drawLeaf(x, y, m, side, isFinal) {
+    const isRed = side==='red';
+    const fill  = isRed ? '#fee2e2' : '#dbeafe';
+    const strk  = isRed ? '#f87171' : '#60a5fa';
+    const tc    = isRed ? '#b91c1c' : '#1d4ed8';
+
+    const hasResult = !!m.winner_name;
+    const win = String(m.winner_team||'').toLowerCase();
+    const iWin  = hasResult && win===side;
+    const iLose = hasResult && win!==side;
+    const op = iLose ? 0.42 : 1;
+
+    const name = side==='red' ? (m.Ten_Do||'—')   : (m.Ten_Xanh||'—');
+    const unit = side==='red' ? (m.Donvi_Do||'') : (m.Donvi_Xanh||'');
+
+    svg += `<rect x="${x|0}" y="${y|0}" width="${F_W}" height="${F_H}" rx="9"
+      fill="${fill}" stroke="${strk}" stroke-width="1.8" opacity="${op}"/>`;
+
+    const fc = iLose ? '#94a3b8' : tc;
+    if (iLose) {
+      svg += `<line x1="${(x+10)|0}" y1="${(y+27)|0}" x2="${(x+F_W-10)|0}" y2="${(y+27)|0}" stroke="#94a3b8" stroke-width="1.4"/>`;
+    }
+    svg += `<text x="${(x+F_W/2)|0}" y="${(y+29)|0}" text-anchor="middle"
+      font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="${iWin?'700':'600'}" fill="${fc}"
+      opacity="${op}">${escT(trunc(name,24))}</text>`;
+    if (unit) svg += `<text x="${(x+F_W/2)|0}" y="${(y+48)|0}" text-anchor="middle"
+      font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${fc}" opacity="${op*0.85}">${escT(trunc(unit,22))}</text>`;
+    if (iWin && isFinal) svg += `<text x="${(x+F_W-12)|0}" y="${(y+20)|0}" text-anchor="end"
+      font-family="'Segoe UI Emoji','Segoe UI',Arial,sans-serif" font-size="14">🏆</text>`;
+  }
+
+  // Vẽ ô kết quả (Winner box)
+  function drawWinner(x, y, m, nextSide, isLoser) {
+    const hasResult = !!m.winner_name;
+    const wt = String(m.winner_team||'').toLowerCase();
+    let fill, strk, tc;
+    if (nextSide==='final')      { fill='#dcfce7'; strk='#4ade80'; tc='#15803d'; }
+    else if (nextSide==='red')   { fill='#fee2e2'; strk='#f87171'; tc='#b91c1c'; }
+    else if (nextSide==='blue')  { fill='#dbeafe'; strk='#60a5fa'; tc='#1d4ed8'; }
+    else                          { fill='#f8fafc'; strk='#94a3b8'; tc='#374151'; }
+
+    const op = isLoser ? 0.42 : 1;
+    svg += `<rect x="${x|0}" y="${y|0}" width="${F_W}" height="${F_H}" rx="9"
+      fill="${fill}" stroke="${strk}" stroke-width="${STROKE}" opacity="${op}"/>`;
+
+    if (hasResult) {
+      const name = m.winner_name;
+      const unit = m.winner_unit || (wt==='red'?m.Donvi_Do:m.Donvi_Xanh) || '';
+      const fc = isLoser ? '#94a3b8' : tc;
+      if (isLoser) svg += `<line x1="${(x+10)|0}" y1="${(y+27)|0}" x2="${(x+F_W-10)|0}" y2="${(y+27)|0}" stroke="#94a3b8" stroke-width="1.4"/>`;
+      svg += `<text x="${(x+F_W/2)|0}" y="${(y+29)|0}" text-anchor="middle"
+        font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="${fc}" opacity="${op}">${escT(trunc(name,24))}</text>`;
+      if (unit) svg += `<text x="${(x+F_W/2)|0}" y="${(y+48)|0}" text-anchor="middle"
+        font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${fc}" opacity="${op*0.85}">${escT(trunc(unit,22))}</text>`;
+      if (nextSide==='final' && !isLoser) svg += `<text x="${(x+F_W-12)|0}" y="${(y+20)|0}" text-anchor="end"
+        font-family="'Segoe UI Emoji','Segoe UI',Arial,sans-serif" font-size="14">🏆</text>`;
+    } else {
+      svg += `<text x="${(x+F_W/2)|0}" y="${(y+F_H/2+5)|0}" text-anchor="middle"
+        font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="${tc}">Thắng trận ${escT(String(m.STT))}</text>`;
+    }
+  }
+
+  // ===== ĐẶT VÀ VẼ ĐỆ QUY =====
+  // Trả về { rightX, centerY, top, bottom }
+  function place(node, x, y, nextSide, parentM, mySide) {
+    const isLoser = parentM && !!parentM.winner_name &&
+      String(parentM.winner_team||'').toLowerCase() !== mySide;
+
+    if (node.kind === 'fighter') {
+      if (node.isBye) {
+        // BYE: không vẽ gì, trả về vị trí rỗng
+        return { rightX: x, centerY: y+F_H/2, top: y, bottom: y };
+      }
+      drawLeaf(x, y, node.match, node.side, nextSide==='final');
+      return { rightX: x+F_W, centerY: y+F_H/2, top: y, bottom: y+F_H };
+    }
+
+    // bye_match: chỉ render nhánh thực, không vẽ ô BYE và không vẽ ô kết quả
+    if (node.kind === 'bye_match') {
+      return place(node.winner, x, y, nextSide, parentM, mySide);
+    }
+
+    // match node
+    const [c1, c2] = node.children;
+    const h1 = nodeH(c1);
+    const h2 = nodeH(c2);
+
+    // Căn chỉnh ngang: nhánh nông hơn (lá trực tiếp) cần lùi sang phải
+    // để leaf của nó nằm cùng cột x với leaf của nhánh sâu hơn
+    const lw1 = leafWidth(c1);
+    const lw2 = leafWidth(c2);
+    const maxLW = Math.max(lw1, lw2);
+    const x1 = x + (maxLW - lw1);
+    const x2 = x + (maxLW - lw2);
+
+    const p1 = place(c1, x1, y,           'red',  node.match, 'red');
+    const p2 = place(c2, x2, y+h1+GAP_Y,  'blue', node.match, 'blue');
+
+    const cy1 = p1.centerY, cy2 = p2.centerY;
+    const midY = (cy1+cy2)/2;
+    const legX = Math.max(p1.rightX, p2.rightX) + COL_GAP*0.38;
+
+    line(p1.rightX, cy1, legX, cy1);
+    line(p2.rightX, cy2, legX, cy2);
+    line(legX, cy1, legX, cy2);
+
+    const wbX = legX + COL_GAP*0.12;
+    line(legX, midY, wbX, midY);
+
+    drawWinner(wbX, midY-F_H/2, node.match, nextSide, isLoser);
+
+    // Label "Trận X"
+    svg += `<text x="${(legX-4)|0}" y="${(midY+5)|0}" text-anchor="end"
+      font-family="'Segoe UI',Arial,sans-serif" font-size="11" font-weight="700" fill="#7c3aed">Trận ${escT(String(node.match.STT))}</text>`;
+
+    const top = Math.min(p1.top, p2.top, midY-F_H/2);
+    const bot = Math.max(p1.bottom, p2.bottom, midY+F_H/2);
+    return { rightX: wbX+F_W, centerY: midY, top, bottom: bot };
+  }
+
+  // ===== VẼ CÂY CHÍNH =====
+  let curY = TOP_PAD;
+  let maxRight = 0;
+  let overallBottom = TOP_PAD;
+
+  for (const tree of trees) {
+    const p = place(tree, LEFT_PAD, curY, 'final', null, null);
+    maxRight       = Math.max(maxRight, p.rightX);
+    overallBottom  = Math.max(overallBottom, p.bottom);
+    curY = p.bottom + 50;
+  }
+
+  // ===== VẼ KHU TRANH 3-4 BÊN DƯỚI =====
+  if (tranh34Match) {
+    const t34Y = overallBottom + 52;
+
+    // Tiêu đề
+    svg += `<text x="${LEFT_PAD|0}" y="${(t34Y-16)|0}" text-anchor="start"
+      font-family="'Segoe UI',Arial,sans-serif" font-size="14" font-weight="700" fill="#7c3aed"
+      >⚔ TRANH HẠNG 3 — Trận số ${escT(String(tranh34Match.STT))}</text>`;
+
+    const lbRed  = tranh34Match.Ten_Do   || '—';
+    const lbBlue = tranh34Match.Ten_Xanh || '—';
+    const uRed   = tranh34Match.Donvi_Do  || '';
+    const uBlue  = tranh34Match.Donvi_Xanh|| '';
+
+    const gapV = 28;
+    const bx = LEFT_PAD;
+    const topY = t34Y;
+    const botY = t34Y + F_H + gapV;
+    const resY = t34Y + (F_H + gapV) / 2 - F_H/2;
+    const resX = bx + F_W + COL_GAP;
+
+    const hasR = !!tranh34Match.winner_name;
+    const wt34 = String(tranh34Match.winner_team||'').toLowerCase();
+
+    // Ô Đỏ (trên)
+    const opR = (hasR && wt34==='blue') ? 0.42 : 1;
+    svg += `<rect x="${bx|0}" y="${topY|0}" width="${F_W}" height="${F_H}" rx="9"
+      fill="#fee2e2" stroke="#f87171" stroke-width="1.8" opacity="${opR}"/>`;
+    if (hasR && wt34==='blue') svg += `<line x1="${(bx+10)|0}" y1="${(topY+27)|0}" x2="${(bx+F_W-10)|0}" y2="${(topY+27)|0}" stroke="#94a3b8" stroke-width="1.4"/>`;
+    svg += `<text x="${(bx+F_W/2)|0}" y="${(topY+29)|0}" text-anchor="middle"
+      font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700"
+      fill="${opR<1?'#94a3b8':'#b91c1c'}" opacity="${opR}">${escT(trunc(lbRed,24))}</text>`;
+    if (uRed) svg += `<text x="${(bx+F_W/2)|0}" y="${(topY+48)|0}" text-anchor="middle"
+      font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${opR<1?'#94a3b8':'#64748b'}"
+      opacity="${opR*0.85}">${escT(trunc(uRed,22))}</text>`;
+
+    // Ô Xanh (dưới)
+    const opB = (hasR && wt34==='red') ? 0.42 : 1;
+    svg += `<rect x="${bx|0}" y="${botY|0}" width="${F_W}" height="${F_H}" rx="9"
+      fill="#dbeafe" stroke="#60a5fa" stroke-width="1.8" opacity="${opB}"/>`;
+    if (hasR && wt34==='red') svg += `<line x1="${(bx+10)|0}" y1="${(botY+27)|0}" x2="${(bx+F_W-10)|0}" y2="${(botY+27)|0}" stroke="#94a3b8" stroke-width="1.4"/>`;
+    svg += `<text x="${(bx+F_W/2)|0}" y="${(botY+29)|0}" text-anchor="middle"
+      font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700"
+      fill="${opB<1?'#94a3b8':'#1d4ed8'}" opacity="${opB}">${escT(trunc(lbBlue,24))}</text>`;
+    if (uBlue) svg += `<text x="${(bx+F_W/2)|0}" y="${(botY+48)|0}" text-anchor="middle"
+      font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="${opB<1?'#94a3b8':'#64748b'}"
+      opacity="${opB*0.85}">${escT(trunc(uBlue,22))}</text>`;
+
+    // Đường nối bracket (trên-dưới → ô kết quả giữa bên phải)
+    const midTop = topY + F_H/2;
+    const midBot = botY + F_H/2;
+    const midMid = (midTop + midBot) / 2;
+    const legX34 = bx + F_W + COL_GAP*0.45;
+
+    line(bx+F_W, midTop, legX34, midTop);
+    line(bx+F_W, midBot, legX34, midBot);
+    line(legX34, midTop, legX34, midBot);
+    line(legX34, midMid, resX, midMid);
+
+    // Ô kết quả hạng 3
+    svg += `<rect x="${resX|0}" y="${(midMid-F_H/2)|0}" width="${F_W}" height="${F_H}" rx="9"
+      fill="#fef3e2" stroke="#fb923c" stroke-width="${STROKE}"/>`;
+    if (hasR) {
+      const wn = tranh34Match.winner_name;
+      const wu = tranh34Match.winner_unit || (wt34==='red'?uRed:uBlue)||'';
+      svg += `<text x="${(resX+F_W/2)|0}" y="${(midMid-F_H/2+29)|0}" text-anchor="middle"
+        font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="#92400e">${escT(trunc(wn,24))}</text>`;
+      if (wu) svg += `<text x="${(resX+F_W/2)|0}" y="${(midMid-F_H/2+48)|0}" text-anchor="middle"
+        font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="#64748b">${escT(trunc(wu,22))}</text>`;
+      svg += `<text x="${(resX+F_W-12)|0}" y="${(midMid-F_H/2+20)|0}" text-anchor="end"
+        font-family="'Segoe UI Emoji','Segoe UI',Arial,sans-serif" font-size="14">🥉</text>`;
+    } else {
+      svg += `<text x="${(resX+F_W/2)|0}" y="${(midMid+5)|0}" text-anchor="middle"
+        font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="700" fill="#b45309">Thắng trận ${escT(String(tranh34Match.STT))}</text>`;
+    }
+
+    overallBottom = Math.max(overallBottom, botY+F_H, midMid+F_H/2);
+    maxRight = Math.max(maxRight, resX+F_W);
+  }
+
+  const svgW = maxRight + RIGHT_PAD;
+  const svgH = overallBottom + BOTTOM_PAD;
+
+  return `<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}"
+    xmlns="http://www.w3.org/2000/svg" style="display:block;font-family:'Segoe UI',Arial,sans-serif">
+    ${svg}
+  </svg>`;
+}
+
+
+// ════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════
+function updateStatus(ok) {
+  const el = document.getElementById('liveStatus');
+  el.innerHTML = ok
+    ? `<div class="dot"></div><span>Đang theo dõi</span>`
+    : `<div class="dot" style="background:#ff6060;animation:none"></div><span>Mất kết nối</span>`;
+  el.style.color = ok ? '#4cdf80' : '#ff6060';
+  document.getElementById('lastUpdate').textContent = `Cập nhật: ${new Date().toLocaleTimeString('vi-VN')}`;
+}
+
+function toast(item, type) {
+  const c = document.getElementById('toastBox');
+  const d = document.createElement('div');
+  d.className = 'toast new';
+  const san = item._san.replace('san','Sân ');
+  d.innerHTML = type === 'combat'
+    ? `<strong>🏆 KQ mới – ${esc(san)} – Trận ${esc(String(item.STT))}</strong><br>Thắng: ${esc(item.winner_name||'?')}`
+    : `<strong>🏅 HC mới – ${esc(san)}</strong><br>${esc(item.manual_medal||item.medal||'')} – ${esc(item.Ten||'?')} (${esc(item.Donvi||'')})`;
+  c.appendChild(d);
+  setTimeout(()=>d.remove(), 6000);
+}
+
+function emptyHTML(msg) {
+  return `<div class="empty"><div class="ico">🔍</div><div>${msg}</div></div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════
+// POPUP: HUY CHƯƠNG THEO ĐOÀN
+// ════════════════════════════════════════════════
+function showDonviMedals(donvi) {
+  const mOrder = {'Vàng':1,'Bạc':2,'Đồng':3};
+  const mIcon  = {'Vàng':'🥇','Bạc':'🥈','Đồng':'🥉'};
+  const mCls   = {'Vàng':'medal-gold','Bạc':'medal-silver','Đồng':'medal-bronze'};
+
+  // Gom huy chương Đối kháng — dedup trận trùng sân
+  const combatMedals = [];
+  const _dedupPopup = {};
+  for (const r of combatData) {
+    if (!r.winner_name) continue;
+    const _dk = `${r.Hang_can||''}|${(r.Loai_Tran||'').toLowerCase()}|${r.Ten_Do||''}|${r.Ten_Xanh||''}`;
+    const _ex = _dedupPopup[_dk];
+    if (!_ex) { _dedupPopup[_dk] = r; continue; }
+    const _sn = +r._san.replace('san',''), _se = +_ex._san.replace('san','');
+    if (_sn < _se) { _dedupPopup[_dk] = r; }
+  }
+  const _popupTranh34 = new Set();
+  const _popupBanket  = {};
+  for (const r of Object.values(_dedupPopup)) {
+    const key = r.Hang_can || '';
+    const loaiTran = (r.Loai_Tran||'').toLowerCase().trim();
+    if (r.winner_name && loaiTran==='chung kết') {
+      const winner = r.winner_team==='red' ? {ten:r.Ten_Do,donvi:r.Donvi_Do} : {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh};
+      const loser  = r.winner_team==='red' ? {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh} : {ten:r.Ten_Do,donvi:r.Donvi_Do};
+      if ((winner.donvi||'') === donvi) combatMedals.push({medal:'Vàng', ten:winner.ten||'', noidung:key, loai:'⚔️ Đối kháng'});
+      if ((loser.donvi||'')  === donvi) combatMedals.push({medal:'Bạc',  ten:loser.ten||'',  noidung:key, loai:'⚔️ Đối kháng'});
+    }
+    // Đồng: người THẮNG Tranh 3-4 (bracket ≥ 4 VĐV)
+    if (r.winner_name && loaiTran.includes('tranh') && loaiTran.includes('3')) {
+      const winner = r.winner_team==='red' ? {ten:r.Ten_Do,donvi:r.Donvi_Do} : {ten:r.Ten_Xanh,donvi:r.Donvi_Xanh};
+      if ((winner.donvi||'') === donvi) combatMedals.push({medal:'Đồng', ten:winner.ten||'', noidung:key, loai:'⚔️ Đối kháng'});
+      _popupTranh34.add(key);
+    }
+    // Gom bán kết để xét bracket 3 VĐV sau
+    if (loaiTran==='bán kết' || loaiTran==='ban ket' || loaiTran==='banket') {
+      if (!_popupBanket[key]) _popupBanket[key] = [];
+      _popupBanket[key].push(r);
+    }
+  }
+  // Bracket 3 VĐV: không có Tranh 3-4, chỉ 1 Bán kết → người THUA = HC Đồng
+  for (const [hc, bkList] of Object.entries(_popupBanket)) {
+    if (!_popupTranh34.has(hc) && bkList.length === 1) {
+      const bk = bkList[0];
+      const loser = bk.winner_team==='red' ? {ten:bk.Ten_Xanh,donvi:bk.Donvi_Xanh} : {ten:bk.Ten_Do,donvi:bk.Donvi_Do};
+      if ((loser.donvi||'') === donvi) combatMedals.push({medal:'Đồng', ten:loser.ten||'', noidung:hc, loai:'⚔️ Đối kháng'});
+    }
+  }
+
+  // Gom huy chương Hội diễn — đọc từ perfAllData (luôn được cập nhật)
+  const perfMedalsDonvi = perfAllData
+    .filter(m => (m.Donvi||'') === donvi && !!(m.manual_medal||m.medal||''))
+    .map(m => ({medal: m.manual_medal||m.medal||'', ten: m.Ten||'', noidung: m.Noidung||'', loai:'🎽 Hội diễn'}));
+
+  const all = [...combatMedals, ...perfMedalsDonvi];
+
+  // Đếm
+  const nVang = all.filter(m=>m.medal==='Vàng').length;
+  const nBac  = all.filter(m=>m.medal==='Bạc').length;
+  const nDong = all.filter(m=>m.medal.startsWith('Đồng')).length;
+
+  document.getElementById('popupTitle').textContent = `🏛️ ${donvi}`;
+  document.getElementById('popupGold').textContent   = `🥇 ${nVang} Vàng`;
+  document.getElementById('popupSilver').textContent = `🥈 ${nBac} Bạc`;
+  document.getElementById('popupBronze').textContent = `🥉 ${nDong} Đồng`;
+  document.getElementById('popupTotal').textContent  = `🏅 ${all.length} tổng`;
+
+  // Nhóm theo loại (Đối kháng / Hội diễn)
+  const groups = {};
+  for (const m of all) {
+    if (!groups[m.loai]) groups[m.loai] = [];
+    groups[m.loai].push(m);
+  }
+
+  let html = '';
+  if (!all.length) {
+    html = '<div class="empty"><div class="ico">🔍</div><div>Chưa có huy chương</div></div>';
+  } else {
+    for (const [loai, items] of Object.entries(groups)) {
+      items.sort((a,b)=>(mOrder[a.medal]||9)-(mOrder[b.medal]||9));
+      html += `<div class="popup-group">
+        <div class="popup-group-title">${loai}</div>`;
+      for (const m of items) {
+        html += `<div class="popup-medal-row">
+          <span class="medal ${mCls[m.medal]||'medal-bronze'}">${mIcon[m.medal]||'🏅'} ${esc(m.medal)}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#1e293b">${esc(m.ten||'—')}</div>
+            <div style="font-size:11px;color:#64748b;margin-top:1px">${esc(m.noidung||'—')}</div>
+          </div>
+        </div>`;
+      }
+      html += '</div>';
+    }
+  }
+
+  document.getElementById('popupBody').innerHTML = html;
+  document.getElementById('donviPopup').style.display = 'flex';
+}
+
+function closePopup() {
+  document.getElementById('donviPopup').style.display = 'none';
+}
+
+// Đóng popup bằng phím Escape
+document.addEventListener('keydown', e => { if(e.key==='Escape') closePopup(); });
+
+fetchAll();
+setInterval(fetchAll, POLL);
+</script>
+</body>
+</html>
